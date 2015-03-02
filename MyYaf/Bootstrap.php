@@ -1,7 +1,6 @@
 <?php
 /**
  * Do some initialization work.
- * Must be called in subclass of Yaf_Bootstrap_Abstract and should be called in first _init*.
  * @author admin@phpdr.net
  *
  */
@@ -73,48 +72,6 @@ class MyYaf_Bootstrap {
 	}
 	
 	/**
-	 * init php config
-	 */
-	private function _initConfigPhp() {
-		$config = Yaf_Registry::get ( 'config' );
-		if (! property_exists ( $config, 'php' )) {
-			return;
-		}
-		$dir = realpath ( Yaf_Application::app ()->getAppDirectory () );
-		$php = $config->php;
-		$php = $php->toArray ();
-		$phpFinal = array ();
-		foreach ( $php as $k => $v ) {
-			if (is_array ( $v )) {
-				foreach ( $v as $k1 => $v1 ) {
-					if (is_array ( $v1 )) {
-						foreach ( $v1 as $k2 => $v2 ) {
-							$phpFinal [$k . '.' . $k1 . '.' . $k2] = $v2;
-						}
-					} else {
-						$phpFinal [$k . '.' . $k1] = $v1;
-					}
-				}
-			} else {
-				$phpFinal [$k] = $v;
-			}
-		}
-		$pathAppend = array (
-				'error_log',
-				'session.save_path' 
-		);
-		foreach ( $phpFinal as $k => $v ) {
-			if (in_array ( $k, $pathAppend )) {
-				$v = $dir . '/' . $v;
-			}
-			ini_set ( $k, $v );
-		}
-		if (Yaf_Dispatcher::getInstance ()->getRequest ()->isCli ()) {
-			ini_set ( 'display_errors', true );
-		}
-	}
-	
-	/**
 	 * php error to ErrorException, yaf catchException
 	 *
 	 * @throws ErrorException
@@ -138,14 +95,19 @@ class MyYaf_Bootstrap {
 	private function _initAutoload() {
 		$conf = Yaf_Application::app ()->getConfig ()->myyaf;
 		if (isset ( $conf, $conf->autoload_path ) && ! empty ( $conf->autoload_path )) {
-			$basePath = rtrim ( Yaf_Loader::getInstance ()->getLibraryPath ( true ), ' /' ) . '/lib';
+			$basePath = rtrim ( Yaf_Loader::getInstance ()->getLibraryPath ( true ), ' /' );
 			$dirs = explode ( ':', $conf->autoload_path );
 			foreach ( $dirs as $k => $v ) {
+				if ($v == '.') {
+					continue;
+				}
 				if (0 !== strpos ( $v, '/' )) {
-					$dirs [$k] = $basePath . '/' . $v;
+					$v = $basePath . '/' . $v;
+				}
+				if (! in_array ( $v, $dirs )) {
+					$dirs [$k] = $v;
 				}
 			}
-			$dirs = array_unique ( $dirs );
 			spl_autoload_register ( function ($name) use($dirs) {
 				$name = str_replace ( '\\', '/', $name );
 				foreach ( $dirs as $v ) {
@@ -168,33 +130,22 @@ class MyYaf_Bootstrap {
 	 */
 	private function _initInclude() {
 		$conf = Yaf_Application::app ()->getConfig ()->myyaf;
-		$basePath = rtrim ( Yaf_Loader::getInstance ()->getLibraryPath ( true ), ' /' ) . '/lib';
+		$basePath = rtrim ( Yaf_Loader::getInstance ()->getLibraryPath ( true ), ' /' );
 		$dirs = array ();
 		if (isset ( $conf, $conf->include_path ) && ! empty ( $conf->include_path )) {
 			$dirs = explode ( ':', $conf->include_path );
 			foreach ( $dirs as $k => $v ) {
 				if (0 !== strpos ( $v, '/' )) {
-					$dirs [$k] = $basePath . '/' . $v;
+					$v = $basePath . '/' . $v;
+				}
+				if (! in_array ( $v, $dirs )) {
+					$dirs [$k] = $v;
 				}
 			}
 		}
-		$dirs [] = $basePath;
-		$include_path = implode ( ':', $dirs );
-		$path = get_include_path () . ':' . $include_path;
-		$path = explode ( ':', $path );
-		$path = array_unique ( $path );
-		$path = implode ( ':', $path );
-		set_include_path ( trim ( $path, ':' ) );
-	}
-	
-	/**
-	 * localNamespace
-	 */
-	private function _initLocalNamespace() {
-		Yaf_Loader::getInstance ()->registerLocalNamespace ( array (
-				'Controller',
-				'Model' 
-		) );
+		if (! empty ( $dirs )) {
+			set_include_path ( get_include_path () . ':' . implode ( ':', $dirs ) );
+		}
 	}
 	
 	/**
@@ -235,71 +186,6 @@ class MyYaf_Bootstrap {
 					$request->setParam ( $k, $v );
 				}
 			}
-		}
-	}
-	
-	/**
-	 * init route on basic of app/conf/route.ini
-	 */
-	private function _initRoute() {
-		$config = Yaf_Registry::get ( 'config' );
-		if (! isset ( $config->route ) || ! isset ( $config->route->routes )) {
-			return;
-		}
-		$routes = $config->route->routes;
-		Yaf_Dispatcher::getInstance ()->getRouter ()->addConfig ( $routes );
-	}
-	
-	/**
-	 * smarty
-	 */
-	private function _initView() {
-		$conf = Yaf_Application::app ()->getConfig ()->myyaf;
-		if (isset ( $conf, $conf->view )) {
-			$conf = $conf->view;
-		}
-		$dispatcher = Yaf_Dispatcher::getInstance ();
-		if (isset ( $conf->enable )) {
-			if ($conf->enable) {
-				$dispatcher->enableView ();
-			} else {
-				$dispatcher->disableView ();
-			}
-		}
-		if (isset ( $conf->type ) && strtolower ( $conf->type ) == 'smarty') {
-			if (! isset ( $conf->smarty )) {
-				$confSmarty = array ();
-				$confSmarty ['compile_dir'] = 'cache/smarty/compile';
-				$confSmarty ['cache_dir'] = 'cache/smarty/cache';
-				$confSmarty ['config_dir'] = 'conf/smarty';
-			} else {
-				$confSmarty = $conf->smarty->toArray ();
-			}
-			$dir = Yaf_Application::app ()->getAppDirectory ();
-			$templateDir = $dir . '/views';
-			// module view path. until yaf 2.3.3, defaultModule doesn't work, defaultModule will always be Index.
-			$moduleDefault = 'Index';
-			$yaf = Yaf_Application::app ()->getConfig ();
-			if (isset ( $yaf->dispatcher, $yaf->dispatcher->defaultModule )) {
-				$moduleDefault = $yaf->dispatcher->defaultModule;
-			}
-			$module = $dispatcher->getRequest ()->getModuleName ();
-			if (isset ( $module ) && $module != $moduleDefault) {
-				$templateDir .= '/_' . strtolower ( $module );
-			}
-			$confSmarty ['template_dir'] = $templateDir;
-			$keyAppend = array (
-					'compile_dir',
-					'cache_dir',
-					'config_dir' 
-			);
-			foreach ( $confSmarty as $k => $v ) {
-				if (in_array ( $k, $keyAppend )) {
-					$confSmarty [$k] = $dir . '/' . $v;
-				}
-			}
-			$view = new MyYaf_View_Smarty ( null, $confSmarty );
-			$dispatcher->setView ( $view );
 		}
 	}
 }

@@ -5,7 +5,7 @@ class MyYaf_View_Smarty implements Yaf_View_Interface {
 	 *
 	 * @var Smarty
 	 */
-	public $_smarty;
+	protected $_smarty;
 	
 	/**
 	 * Constructor
