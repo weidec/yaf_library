@@ -1,7 +1,7 @@
 <?php
 /**
- *
- * @author Ares
+ * Neet CurlMulti
+ * @author admin@phpdr.net
  *        
  */
 class MyBaiduPCS extends BaiduPCS {
@@ -15,17 +15,16 @@ class MyBaiduPCS extends BaiduPCS {
 	 *        	tokenFile
 	 *        	clientID
 	 *        	clientSecret
-	 * @throws ErrorException
 	 */
 	function __construct($param = array()) {
 		if (empty ( $param ['tokenFile'] )) {
-			throw new Exception ( 'tokenFile not specified' );
+			user_error ( 'tokenFile not specified', E_USER_WARNING );
 		}
 		if (empty ( $param ['clientID'] )) {
-			throw new Exception ( 'clientID not set' );
+			user_error ( 'clientID not set', E_USER_WARNING );
 		}
 		if (empty ( $param ['clientSecret'] )) {
-			throw new Exception ( 'clientSecret not set' );
+			user_error ( 'clientSecret not set', E_USER_WARNING );
 		}
 		$this->tokenFile = $param ['tokenFile'];
 		$this->clientID = $param ['clientID'];
@@ -33,7 +32,7 @@ class MyBaiduPCS extends BaiduPCS {
 		$fileData = new Ares_FileData ( $this->tokenFile );
 		$token = $fileData->get ();
 		if (! isset ( $token ) || empty ( $token )) {
-			throw new Exception ( "token not found" );
+			user_error ( "token not found", E_USER_WARNING );
 		}
 		$this->curl = new CurlMulti_Core ();
 		$token = json_decode ( $token );
@@ -46,10 +45,10 @@ class MyBaiduPCS extends BaiduPCS {
 			if ($result ['info'] ['http_code'] == 200) {
 				$r = $result;
 			} else {
-				throw new Exception ( 'http error, http_code=' . $result ['info'] ['http_code'] . ', url=' . $result ['info'] ['url'] );
+				user_error ( 'http error, http_code=' . $result ['info'] ['http_code'] . ', url=' . $result ['info'] ['url'], E_USER_WARNING );
 			}
 		}, function ($err) {
-			throw new ErrorException ( 'curl error, ' . $err ['error'] [0] . ': ' . $err ['error'] [1] );
+			user_error ( 'curl error, ' . $err ['error'] [0] . ': ' . $err ['error'] [1], E_USER_WARNING );
 		} )->start ();
 		$r = json_decode ( $r ['content'] );
 		if (isset ( $r->error_code )) {
@@ -71,7 +70,7 @@ class MyBaiduPCS extends BaiduPCS {
 			if (isset ( $token->error_description )) {
 				$msg .= ', ' . $token->error_description;
 			}
-			throw new Exception ( $msg );
+			user_error ( $msg, E_USER_WARNING );
 		}
 	}
 	
@@ -87,7 +86,7 @@ class MyBaiduPCS extends BaiduPCS {
 		}
 		$size = filesize ( $file );
 		if (0 == $size) {
-			throw new ErrorException ( "file size is 0, file=" . $file );
+			user_error ( "file size is 0, file=" . $file, E_USER_WARNING );
 		}
 		$url = 'https://c.pcs.baidu.com/rest/2.0/pcs/file?method=upload&path=' . urlencode ( $remoteFile ) . '&access_token=' . $this->getAccessToken ();
 		$opt = array ();

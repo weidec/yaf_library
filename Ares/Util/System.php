@@ -1,10 +1,4 @@
 <?php
-
-namespace Ares\Util;
-
-use ErrorException;
-use Ares;
-
 class System {
 	
 	/**

@@ -1,12 +1,10 @@
 <?php
-class Ares_MySQL extends PDO {
-	function __construct($dsn, $username = null, $passwd = null, $options = null) {
-		parent::__construct ( $dsn, $username, $passwd, $options );
-		$this->setAttribute ( PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ );
-		$this->setAttribute ( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
-		$this->exec ( 'set names utf8' );
-	}
-	
+/**
+ * 
+ * @author admin@phpdr.net
+ *
+ */
+class MySQL extends PDO {
 	/**
 	 * 插入一条记录
 	 *

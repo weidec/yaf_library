@@ -1,53 +1,45 @@
 <?php
-
-namespace _lib;
-
-class UtilValidator {
-	/**
-	 * 检测ip地址
-	 *
-	 * @param string $str
-	 * @return boolean
-	 */
-	static function isIp($str) {
-		$p = '/^((?:(?:25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(?:25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d))))$/';
-		return ( bool ) preg_match ( $p, $str );
+/**
+ * 
+ * @author admin@phpdr.net
+ *
+ */
+class Helper_Validator {
+	static function ip($ip) {
+		return ( bool ) preg_match ( '/^((25[0-5]|2[0-4]\d|[01]?\d\d?)($|(?!\.$)\.)){4}$/', $ip );
 	}
-
+	
 	/**
-	 * <pre>
-	 * 包括闰年的日期判断
-	 * 格式：年-月-日
-	 * 精确,但是效率不高
-	 * </pre>
+	 * leap year inlcuded
+	 * format:year-month-day
+	 * accurate, but slow
 	 *
-	 * @param unknown $str
+	 * @param unknown $str        	
 	 * @return boolean
 	 */
-	static function isDate($str) {
+	static function date($str) {
 		$p = '/^((((1[6-9]|[2-9]\d)\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\d|3[01]))|(((1[6-9]|[2-9]\d)\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\d|30))|(((1[6-9]|[2-9]\d)\d{2})-0?2-(0?[1-9]|1\d|2[0-8]))|(((1[6-9]|[2-9]\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))-0?2-29-))$/';
 		return ( bool ) preg_match ( $p, $str );
 	}
-
+	
 	/**
-	 * 包括闰年的时间判断
-	 * 格式：年-月-日 时:分:秒
-	 * 精确,但是效率不高
+	 * leap year included
+	 * format: year-month-day hour:minute:second
+	 * accurate, but slow
 	 *
-	 * @param unknown $str
+	 * @param unknown $str        	
 	 */
-	static function isDateTime($str) {
+	static function datetime($str) {
 		$p = '/^((((1[6-9]|[2-9]\d)\d{2})-(0?[13578]|1[02])-(0?[1-9]|[12]\d|3[01]))|(((1[6-9]|[2-9]\d)\d{2})-(0?[13456789]|1[012])-(0?[1-9]|[12]\d|30))|(((1[6-9]|[2-9]\d)\d{2})-0?2-(0?[1-9]|1\d|2[0-8]))|(((1[6-9]|[2-9]\d)(0[48]|[2468][048]|[13579][26])|((16|[2468][048]|[3579][26])00))-0?2-29-)) (([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))$/';
 		return ( bool ) preg_match ( $p, $str );
 	}
-
+	
 	/**
-	 * 验证邮箱
 	 *
-	 * @param unknown $str
+	 * @param unknown $str        	
 	 * @return boolean
 	 */
-	static function isEmail($str) {
+	static function email($str) {
 		$p = '/^[a-z]([a-z0-9]*[-_]?[a-z0-9]+)*@([a-z0-9]*[-_]?[a-z0-9]+)+[\.][a-z]{2,3}([\.][a-z]{2})?$/i';
 		return ( bool ) preg_match ( $p, $str );
 	}

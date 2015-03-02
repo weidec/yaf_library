@@ -1,13 +1,17 @@
 <?php
-class Ares_Http {
+/**
+ * 
+ * @author admin@phpdr.net
+ *
+ */
+class Helper_Http {
 	
 	/**
-	 * 发送post请求
+	 * send post
 	 *
-	 * @param unknown $url        	
-	 * @param unknown $data        	
+	 * @param string $url        	
+	 * @param array $data        	
 	 * @param string $type        	
-	 * @throws ErrorException
 	 * @return string
 	 */
 	static function post($url, $data, $type = 'form') {
@@ -16,8 +20,7 @@ class Ares_Http {
 		elseif ($type == 'xmlrpc')
 			$contentType = 'text/xml';
 		else
-			throw new ErrorException ( 'type was invalid' );
-			// 先解析url
+			user_error ( 'type was invalid', E_USER_WARNING );
 		$url = parse_url ( $url );
 		if (! $url)
 			user_error ( "couldn't parse url", E_USER_ERROR );
@@ -26,9 +29,9 @@ class Ares_Http {
 			$data = http_build_query ( $data );
 		$len = strlen ( $data );
 		$uri = $url ['path'];
-		if (! empty ( $url ['query'] ))
+		if (! empty ( $url ['query'] )) {
 			$uri .= '?' . $url ['query'];
-			// 拼上http头
+		}
 		$out = "POST " . $uri . " HTTP/1.1\r\n";
 		$out .= "Host: " . $url ['host'] . "\r\n";
 		$out .= "Expires: Mon, 26 Jul 1970 05:00:00 GMT\r\n";
@@ -40,7 +43,6 @@ class Ares_Http {
 		$out .= "Content-Length: $len\r\n";
 		$out .= "\r\n";
 		$out .= $data . "\r\n";
-		// 打开一个sock
 		$fp = fsockopen ( $url ['host'], $port );
 		$line = "";
 		if (! $fp) {
@@ -50,7 +52,7 @@ class Ares_Http {
 			while ( ! feof ( $fp ) ) {
 				$line .= fgets ( $fp, 2048 );
 			}
-			// 去掉头文件
+			// cutoff header
 			if ($line) {
 				$body = stristr ( $line, "\r\n\r\n" );
 				$body = substr ( $body, 4 );
@@ -62,13 +64,13 @@ class Ares_Http {
 	}
 	
 	/**
-	 * 301或302跳转
+	 * redirect
 	 *
 	 * @param string $url        	
 	 * @param number $code        	
 	 */
 	static function redirect($url, $code = 302) {
-		// 有些浏览器会对301进行缓存，这里清空之
+		// some brower will cache 301 request, clean it!
 		header ( "Expires: Mon, 26 Jul 1997 05:00:00 GMT" );
 		header ( "Last-Modified: " . gmdate ( "D, d M Y H:i:s" ) . "GMT" );
 		header ( "Cache-Control: no-cache, must-revalidate" );
@@ -82,27 +84,6 @@ class Ares_Http {
 			$url = $_SERVER ['HTTP_HOST'] . $url;
 		}
 		header ( 'Location: ' . $url, true, $code );
-	}
-	
-	/**
-	 * 获取客户端IP地址
-	 *
-	 * @return mixed
-	 */
-	static function getClientIp() {
-		$unknown = 'unknown';
-		$ip = '';
-		if (isset ( $_SERVER ['HTTP_X_FORWARDED_FOR'] ) && $_SERVER ['HTTP_X_FORWARDED_FOR'] && strcasecmp ( $_SERVER ['HTTP_X_FORWARDED_FOR'], $unknown )) {
-			$ip = $_SERVER ['HTTP_X_FORWARDED_FOR'];
-		} elseif (isset ( $_SERVER ['REMOTE_ADDR'] ) && $_SERVER ['REMOTE_ADDR'] && strcasecmp ( $_SERVER ['REMOTE_ADDR'], $unknown )) {
-			$ip = $_SERVER ['REMOTE_ADDR'];
-		}
-		/*
-		 * 处理多层代理的情况 或者使用正则方式： $ip = preg_match("/[\d\.] {7,15}/", $ip, $matches) ? $matches[0] : $unknown;
-		 */
-		if (false !== strpos ( $ip, ',' ))
-			$ip = reset ( explode ( ',', $ip ) );
-		return $ip;
 	}
 	
 	/**

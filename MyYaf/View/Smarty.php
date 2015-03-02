@@ -39,7 +39,7 @@ class MyYaf_View_Smarty implements Yaf_View_Interface {
 			return;
 		}
 		
-		throw new Exception ( 'Invalid path provided' );
+		throw new Yaf_Exception_LoadFailed_View( 'Invalid path provided' );
 	}
 	public function getScriptPath() {
 		return $this->_smarty->template_dir;

@@ -1,13 +1,10 @@
 <?php
-
-namespace lib;
-
-class Date {
-
+class Helper_Date {
+	
 	/**
-	 * 把时间戳形式的时间长度格式化成可读的时间长度
+	 * convert int time length to readable format
 	 *
-	 * @param integer $timeScale
+	 * @param integer $timeScale        	
 	 * @return string
 	 */
 	static function timeLengthFormat($timeScale) {

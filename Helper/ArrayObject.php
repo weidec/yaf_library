@@ -1,39 +1,63 @@
 <?php
-
-namespace Ares;
-
-use ErrorException;
-
-/**
- * 数组和对象的功能封装
- */
-class ArrayObject {
-	
+class Helper_ArrayObject {
 	/**
-	 * 合并两个对象
+	 * merge object or array
 	 *
 	 * @param unknown $obj1        	
 	 * @param unknown $obj2        	
+	 * @return mixed
 	 */
-	static function objectMerge($obj1, $obj2) {
-		foreach ( $obj2 as $k => $v ) {
-			$obj1->$k = $v;
+	static function merge($obj1, $obj2) {
+		if (is_object ( $obj1 )) {
+			foreach ( $obj2 as $k => $v ) {
+				$obj1->$k = $v;
+			}
+		} elseif (is_array ( $obj1 )) {
+			foreach ( $obj2 as $k => $v ) {
+				$obj1 [$k] = $v;
+			}
+		} else {
+			user_error ( 'first parameter\'s type is invalid, type is ' . gettype ( $obj1 ), E_USER_WARNING );
+			return false;
 		}
+		return $obj1;
 	}
 	
 	/**
-	 * recursive array_values()
+	 * recursive implode
+	 *
+	 * @param unknown $glue        	
+	 * @param unknown $pieces        	
+	 * @return string
+	 */
+	static function implode($glue, $pieces) {
+		if (! is_array ( $pieces )) {
+			if (is_object ( $pieces )) {
+				$pieces = ( array ) $pieces;
+			} else {
+				user_error ( 'type error, must be array or object, type=' . gettype ( $pieces ), E_USER_WARNING );
+				return false;
+			}
+		}
+		foreach ( $pieces as $k => $v )
+			if (is_array ( $v ))
+				$pieces [$k] = call_user_func ( __METHOD__, $v );
+		return trim ( implode ( $glue, $pieces ), $glue );
+	}
+	
+	/**
+	 * recursive values
 	 *
 	 * @param unknown $arr        	
 	 * @return mixed
 	 */
-	static function arrayValuesR($arr) {
+	static function values($arr) {
 		$r = array ();
 		if (is_array ( $arr ) or is_object ( $arr )) {
 			$t = array_values ( ( array ) $arr );
 			foreach ( $t as $v ) {
 				if (is_array ( $v ) or is_object ( $v )) {
-					$r = array_merge ( $r, self::arrayValuesR ( $v ) );
+					$r = array_merge ( $r, call_user_func ( __METHOD__, $v ) );
 				} else {
 					$r [] = $v;
 				}
@@ -43,11 +67,10 @@ class ArrayObject {
 	}
 	
 	/**
-	 * 是array_combine()的扩展，第二个参数可以是标量
+	 * second parameter can be scalar
 	 *
 	 * @param array $arr        	
-	 * @param unknown $val
-	 *        	标量，或和$arr元素数量相同的数组
+	 * @param unknown $val        	
 	 */
 	static function arrayCombine(array $arr, $var) {
 		if (is_array ( $var )) {
@@ -56,40 +79,51 @@ class ArrayObject {
 		if (is_int ( $var ) || is_float ( $var ) || is_string ( $var ) || is_bool ( $var )) {
 			return array_combine ( $arr, array_pad ( array (), count ( $arr ), $var ) );
 		} else {
-			throw new ErrorException ( 'second parameter is invalid' );
+			user_error ( 'second parameter is invalid', E_USER_WARNING );
 		}
 	}
 	
 	/**
-	 * 从数组中移出一项
+	 * get a value and remove it
 	 *
-	 * @param unknown $array        	
+	 * @param array $array        	
 	 * @param unknown $key        	
-	 * @return unknown
+	 * @return mixed
 	 */
-	static function arrayRemove($array, $key) {
-		$v = $array [$key];
-		unset ( $array [$key] );
+	static function remove($array, $key) {
+		if (is_array ( $array )) {
+			$v = $array [$key];
+			unset ( $array [$key] );
+		} elseif (is_object ( $array )) {
+			$v = $array->$key;
+			unset ( $array->key );
+		}
 		return $v;
 	}
 	
 	/**
-	 * recursive array_search()
+	 * recursive search
 	 *
 	 * @param unknown $needle        	
 	 * @param unknown $haystack        	
 	 * @param string $strict        	
-	 * @return 没找到返回false,否则返回键
+	 * @return false or array
 	 */
-	static function arraySearchR($needle, $haystack, $strict = false) {
-		if (false === is_array ( $haystack ))
-			return false;
+	static function scan($needle, $haystack, $strict = false) {
+		if (false === is_array ( $haystack )) {
+			if (is_object ( $haystack )) {
+				$haystack = ( array ) $haystack;
+			} else {
+				user_error ( 'must be array or object', E_USER_WARNING );
+				return false;
+			}
+		}
 		$key = array ();
 		$r = array_search ( $needle, $haystack, $strict );
 		if (false === $r) {
 			foreach ( $haystack as $k => $v ) {
 				if (is_array ( $v )) {
-					$t = self::arraySearchR ( $needle, $v, $strict, true );
+					$t = self::scan ( $needle, $v, $strict, true );
 					if (false !== $t) {
 						$key = array_merge ( $key, array (
 								$k 
@@ -108,7 +142,7 @@ class ArrayObject {
 	}
 	
 	/**
-	 * 在数组的某个键前边插入一项
+	 * insert before a key
 	 *
 	 * @param unknown $array        	
 	 * @param unknown $key        	
@@ -129,7 +163,7 @@ class ArrayObject {
 	}
 	
 	/**
-	 * 直接返回值而不是键，适用于不需要键的情况
+	 * return values but not key
 	 *
 	 * @param unknown $arr        	
 	 * @param string $num        	
@@ -159,11 +193,11 @@ class ArrayObject {
 	}
 	
 	/**
-	 * 给定一批键返回对应的值
+	 * return values use given keys
 	 *
 	 * @param unknown $arr        	
 	 * @param unknown $keys        	
-	 * @return boolean Ambigous unknown>
+	 * @return mixed
 	 */
 	static function arrayAt($arr, $keys) {
 		if (! is_array ( $arr ))
@@ -184,7 +218,7 @@ class ArrayObject {
 	 * @param string $strict        	
 	 * @return boolean
 	 */
-	static function inArrayR($needle, $haystack, $strict = false) {
+	static function inArray($needle, $haystack, $strict = false) {
 		if (is_array ( $haystack )) {
 			if (in_array ( $needle, $haystack, $strict ))
 				return true;
@@ -200,12 +234,11 @@ class ArrayObject {
 	}
 	
 	/**
-	 * 把二维数组中第二维的某个字段作为第一维的键，如果不存在这个键这一条记录就干掉了
+	 * make second dimension value to array key,if dimension value not exists it will be unset.
 	 *
 	 * @param unknown $list        	
 	 * @param unknown $k        	
-	 * @throws Exception
-	 * @return array
+	 * @return mixed
 	 */
 	static function arrayValue2key($list, $k) {
 		if (is_array ( $list )) {
@@ -223,39 +256,23 @@ class ArrayObject {
 			}
 			return $r;
 		} else {
-			throw new ErrorException ( 'parameter 1 is not an array' );
+			user_error ( 'parameter 1 is not an array', E_USER_ERROR );
+			return false;
 		}
 	}
 	
 	/**
-	 * php默认是浅克隆，函数实现深克隆
 	 *
-	 * @param object $obj
+	 * @param object $obj        	
 	 * @return object $obj
 	 */
-	function deepCloneR($obj) {
+	static function deepClone($obj) {
 		$objClone = clone $obj;
 		foreach ( $objClone as $k => $v ) {
 			if (is_object ( $v )) {
-				$objClone->$k = call_user_func ( __FUNCTION__, $v );
+				$objClone->$k = call_user_func ( __METHOD__, $v );
 			}
 		}
 		return $objClone;
-	}
-	
-	/**
-	 * 递归的合并两个对象
-	 *
-	 * @param unknown $obj1
-	 * @param unknown $obj2
-	 */
-	function objectMergeR($obj1, $obj2) {
-		foreach ( $obj2 as $k => $v ) {
-			if (is_object ( $v ) && isset ( $obj1->$k ) && is_object ( $obj1->$k )) {
-				call_user_func ( __FUNCTION__, $obj1->$k, $v );
-			} else {
-				$obj1->$k = $v;
-			}
-		}
 	}
 }

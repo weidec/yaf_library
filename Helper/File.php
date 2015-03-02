@@ -1,18 +1,22 @@
 <?php
-class Ares_File {
+/**
+ * 
+ * @author admin@phpdr.net
+ *
+ */
+class Helper_File {
 	/**
-	 * 利用堆栈清空目录
+	 * flush dir use stack
 	 *
 	 * @param string $dir
-	 *        	目录名,最好是绝对路径,否则相对路径搞错了后果自负
+	 *        	absolute path is highly recommanded
 	 * @return boolean
 	 */
 	static function dirFlush($dir) {
 		clearstatcache ();
-		// 格式化路径并清除结尾的斜线
 		$dir = realpath ( $dir );
 		if (file_exists ( $dir ) && is_writable ( $dir )) {
-			// glob对点开头的文件处理有些问题,所以用scandir
+			// glob has someproblems with dot started filename,so use scandir
 			$files = scandir ( $dir );
 			foreach ( $files as $k => $v ) {
 				if ($v == '.' || $v == '..')
@@ -26,7 +30,7 @@ class Ares_File {
 					if (! unlink ( $file ))
 						return false;
 				} else {
-					// 子目录为空就删除,否则进栈
+					// do delete if subdir is empty,otherwise push to stack
 					$dirFiles = scandir ( $file );
 					if (count ( $dirFiles ) == 2) {
 						if (! rmdir ( $file ))
@@ -49,18 +53,16 @@ class Ares_File {
 	}
 	
 	/**
-	 * 在某个目录下循环创建子目录
+	 * make subdirs
 	 *
-	 * @param unknown $parent
-	 *        	父路径
-	 * @param unknown $dir
-	 *        	相对路径
-	 * @param number $mode
-	 *        	模式
+	 * @param unknown $parent        	
+	 * @param unknown $dir        	
+	 * @param number $mode        	
 	 */
-	static function mkDirSub($parent, $subdir, $mode = 0755) {
+	static function mkSubdir($parent, $subdir, $mode = 0755) {
 		if (! is_dir ( $parent )) {
-			throw new ErrorException ( 'dir ' . $parent . ' doesn\'t exist' );
+			user_error ( 'dir ' . $parent . ' doesn\'t exist', E_USER_WARNING );
+			return false;
 		}
 		$parent = realpath ( $parent );
 		$subdir = self::pathClean ( trim ( $subdir, ' /\\' ) );
@@ -76,7 +78,7 @@ class Ares_File {
 	}
 	
 	/**
-	 * 规范化一个相对路径或绝对路径，所有分隔符用/替换，计算路径中的.和..
+	 * Clean a messy path.All seperator replaced with '/'.
 	 *
 	 * @param string $path        	
 	 * @return string
@@ -102,17 +104,16 @@ class Ares_File {
 	}
 	
 	/**
-	 * 取文件最后$n行
+	 * get last n line of the file
 	 *
-	 * @param string $filename
-	 *        	文件路径
-	 * @param int $n
-	 *        	最后几行
-	 * @return mixed false表示有错误，成功则返回字符串
+	 * @param string $filename        	
+	 * @param int $n        	
+	 * @return mixed false or lines
 	 */
 	static function tail($file, $n) {
 		if (! $fp = fopen ( $file, 'r' )) {
-			throw new Exception ( 'failed open file, file=' . $file );
+			user_error ( 'failed open file, file=' . $file, E_USER_WARNING );
+			return false;
 		}
 		$pos = - 2;
 		$eof = "";
@@ -134,23 +135,25 @@ class Ares_File {
 	}
 	
 	/**
-	 * 递归扫描目录
+	 * scan dir recersively
 	 *
-	 * @param string $dir
-	 *        	被扫描的目录
+	 * @param string $dir        	
 	 * @param enum $mode
-	 *        	文件类型，file，dir，null表示所有类型
+	 *        	file
+	 *        	dir
+	 *        	null:file and dir
 	 * @param int $depth
-	 *        	递归的深度,null是无限递归
+	 *        	null is infinite
 	 * @param array $ignore
-	 *        	通配符匹配
+	 *        	wildcard
 	 * @param number $order
-	 *        	默认的排序顺序是按字母升序排列，如果设为 1，则按字母降序排列。
+	 *        	0 order by letter asc
+	 *        	1 order by letter desc
 	 * @param string $context
-	 *        	参见手册scandir
+	 *        	see php menual on scandir
 	 * @return array
 	 */
-	static function scandirR($dir, $mode = null, $depth = null, $ignore = array(), $order = 0, $context = null) {
+	static function scandir($dir, $mode = null, $depth = null, $ignore = array(), $order = 0, $context = null) {
 		static $modes = array (
 				'file',
 				'dir',
@@ -158,7 +161,8 @@ class Ares_File {
 		);
 		$r = array ();
 		if (! in_array ( $mode, $modes )) {
-			throw new ErrorException ( 'mode is invalid' );
+			user_error ( 'mode is invalid', E_USER_WARNING );
+			return false;
 		}
 		if (is_numeric ( $depth ) && -- $depth < 0)
 			return $r;

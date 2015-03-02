@@ -1,26 +1,29 @@
 <?php
-class QQIp{
+/**
+ * 
+ * @author admin@phpdr.net
+ *
+ */
+class QQIp {
 	private $file;
-	function __construct($dataFile){
-		$this->file=$dataFile;
+	function __construct($dataFile) {
+		$this->file = $dataFile;
 	}
 	/**
-	 * 从QQ纯真IP数据库文件解析IP地址
-	 * 
-	 * @param unknown $ip        	
+	 * parse ip address from QQ Chunzhen IP data file
+	 *
+	 * @param mixed $ip        	
 	 */
 	function parse($ip) {
-		// 检查IP地址
 		if (! preg_match ( '/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/', $ip )) {
-			return '没有找到对应地址或IP输入错误';
+			user_error ( 'wrong ip', E_USER_WARNING );
+			return false;
 		}
-		// 打开IP数据文件
 		$fd = fopen ( $this->file, 'rb' );
 		if ($fd) {
-			// 分解IP进行运算，得出整形数
 			$ip = explode ( '.', $ip );
 			$ipNum = $ip [0] * 16777216 + $ip [1] * 65536 + $ip [2] * 256 + $ip [3];
-			// 获取IP数据索引开始和结束位置
+			// get start and end position
 			$DataBegin = fread ( $fd, 4 );
 			$DataEnd = fread ( $fd, 4 );
 			$ipbegin = implode ( '', unpack ( 'L', $DataBegin ) );
@@ -34,26 +37,26 @@ class QQIp{
 			$EndNum = $ipAllNum;
 			$ip1num = null;
 			$ip2num = null;
-			// 使用二分查找法从索引记录中搜索匹配的IP记录
+			// find ip use dichotomy algorithm
 			while ( $ip1num > $ipNum || $ip2num < $ipNum ) {
 				$Middle = intval ( ($EndNum + $BeginNum) / 2 );
-				// 偏移指针到索引位置读取4个字节
+				// excursion the pointer to index position and read 4 bytes
 				fseek ( $fd, $ipbegin + 7 * $Middle );
 				$ipData1 = fread ( $fd, 4 );
 				if (strlen ( $ipData1 ) < 4) {
 					fclose ( $fd );
 					return '- System Error';
 				}
-				// 提取出来的数据转换成长整形，如果数据是负数则加上2的32次幂
+				// convert to long, plush 2^32 if is negative
 				$ip1num = implode ( '', unpack ( 'L', $ipData1 ) );
 				if ($ip1num < 0)
 					$ip1num += pow ( 2, 32 );
-					// 提取的长整型数大于我们IP地址则修改结束位置进行下一次循环
+					// if greater than ip then change the end position and go to next loop
 				if ($ip1num > $ipNum) {
 					$EndNum = $Middle;
 					continue;
 				}
-				// 取完上一个索引后取下一个索引
+				// fetch next index after current fetched
 				$DataSeek = fread ( $fd, 3 );
 				if (strlen ( $DataSeek ) < 3) {
 					fclose ( $fd );
@@ -69,7 +72,7 @@ class QQIp{
 				$ip2num = implode ( '', unpack ( 'L', $ipData2 ) );
 				if ($ip2num < 0)
 					$ip2num += pow ( 2, 32 );
-					// 没找到提示未知
+					// return unknow if not found
 				if ($ip2num < $ipNum) {
 					if ($Middle == $BeginNum) {
 						fclose ( $fd );
@@ -78,7 +81,7 @@ class QQIp{
 					$BeginNum = $Middle;
 				}
 			}
-			// 下面的代码还没读明白，有兴趣的慢慢读
+			// don't understand code bellow yet...
 			$ipFlag = fread ( $fd, 1 );
 			if ($ipFlag == chr ( 1 )) {
 				$ipSeek = fread ( $fd, 3 );

@@ -1,15 +1,10 @@
 <?php
-
-namespace _lib;
-
-use ErrorException;
-
-class UtilImage {
-
+class Helper_Image {
+	
 	/**
-	 * 获取图片的真实后缀
+	 * get real image extention by image content
 	 *
-	 * @param unknown $file
+	 * @param unknown $file        	
 	 * @return string
 	 */
 	static function ext($file) {
@@ -19,22 +14,21 @@ class UtilImage {
 			return image_type_to_extension ( exif_imagetype ( $file ), false );
 		}
 	}
-
+	
 	/**
-	 * 生成缩略图
+	 * thumbnail
 	 *
-	 * @param unknown $file
-	 * @param unknown $thumb
-	 * @param unknown $width
-	 * @param unknown $height
-	 * @param string $ratio
-	 * @param number $quality
-	 * @throws ErrorException
+	 * @param unknown $file        	
+	 * @param unknown $thumb        	
+	 * @param unknown $width        	
+	 * @param unknown $height        	
+	 * @param string $ratio        	
+	 * @param number $quality        	
 	 * @return boolean
 	 */
 	static function thumb($file, $thumb, $width, $height, $ratio = true, $quality = 100) {
 		if (! file_exists ( $file )) {
-			throw new ErrorException ( $file . ' was not found' );
+			user_error ( $file . ' was not found', E_USER_WARNING );
 		}
 		$im = '';
 		$imageSize = getimagesize ( $file );
@@ -71,14 +65,14 @@ class UtilImage {
 			} elseif (function_exists ( "imagecreate" ) && function_exists ( "imagecopyresized" ) && $ni = imagecreate ( $width, $height )) {
 				imagecopyresized ( $ni, $im, 0, 0, 0, 0, $width, $height, $srcWidth, $srcHeight );
 			} else {
-				throw new ErrorException ( 'Can\'t create thumb,no appropriate function' );
+				user_error ( 'Can\'t create thumb,no appropriate function', E_USER_WARNING );
 			}
 			if (exif_imagetype ( $file ) == IMAGETYPE_JPEG && function_exists ( 'imagejpeg' )) {
 				imagejpeg ( $ni, $thumb );
 			} elseif (exif_imagetype ( $file ) == IMAGETYPE_PNG && function_exists ( 'imagepng' )) {
 				imagepng ( $ni, $thumb );
 			} else {
-				throw new ErrorException ( 'no function find to create type:' . exif_imagetype ( $file ) . ' image' );
+				user_error ( 'no function find to create type:' . exif_imagetype ( $file ) . ' image', E_USER_WARNING );
 			}
 		} else {
 			copy ( $file, $thumb );
@@ -87,55 +81,55 @@ class UtilImage {
 		imagedestroy ( $ni );
 		return file_exists ( $thumb );
 	}
-
+	
 	/**
-	 * 为图片添加水印
+	 * add watermark to image
 	 *
-	 * @param unknown $source
-	 * @param unknown $water
-	 * @param string $savename
-	 * @param number $alpha
+	 * @param unknown $source        	
+	 * @param unknown $water        	
+	 * @param string $savename        	
+	 * @param number $alpha        	
 	 * @return boolean
 	 */
 	static function water($source, $water, $savename = null, $alpha = 80) {
-		// 检查文件是否存在
-		if (! file_exists ( $source ) || ! file_exists ( $water ))
+		if (! file_exists ( $source ) || ! file_exists ( $water )) {
 			return false;
-
-			// 图片信息
+		}
+		// image info
 		$sInfo = self::getImageInfo ( $source );
 		$wInfo = self::getImageInfo ( $water );
-
-		// 如果图片小于水印图片，不生成图片
-		if ($sInfo ["width"] < $wInfo ["width"] || $sInfo ['height'] < $wInfo ['height'])
+		
+		// if image size less than watermark image, then return
+		if ($sInfo ["width"] < $wInfo ["width"] || $sInfo ['height'] < $wInfo ['height']) {
 			return false;
-
-			// 建立图像
+		}
+		
+		// create image
 		$sCreateFun = "imagecreatefrom" . $sInfo ['type'];
 		$sImage = $sCreateFun ( $source );
 		$wCreateFun = "imagecreatefrom" . $wInfo ['type'];
 		$wImage = $wCreateFun ( $water );
-
-		// 设定图像的混色模式
+		
+		// set image color mixture mode
 		imagealphablending ( $wImage, true );
-
-		// 图像位置,默认为右下角右对齐
+		
+		// position, default bottom right corner
 		$posY = $sInfo ["height"] - $wInfo ["height"];
 		$posX = $sInfo ["width"] - $wInfo ["width"];
-
-		// 生成混合图像
+		
+		// generate mixed image
 		// ImageAlphaBlending($sImage, true);
 		// imagecopymerge($sImage, $wImage, $posX, $posY, 0, 0, $wInfo['width'], $wInfo['height'], $alpha);
 		// imagecopyresampled($sImage, $wImage, $posX, $posY, 0, 0, $wInfo['width'], $wInfo['height'],$sInfo['width'],$sInfo['height']);
 		imagecopy ( $sImage, $wImage, $posX, $posY, 0, 0, $wInfo ['width'], $wInfo ['height'] );
-		// 输出图像
+		// output image
 		$ImageFun = 'Image' . $sInfo ['type'];
-		// 如果没有给出保存文件名，默认为原图像名
+		// use original image filename if not specified
 		if (! $savename) {
 			$savename = $source;
-			@unlink ( $source );
+			unlink ( $source );
 		}
-		// 保存图像
+		// save image
 		$ImageFun ( $sImage, $savename );
 		imagedestroy ( $sImage );
 	}
