@@ -64,7 +64,23 @@ class MyYaf_Bootstrap {
 			// errors supressed by @ will cause error_reporting() always return 0
 			$r = error_reporting ();
 			if ($r != 0) {
-				throw new ErrorException ( $errstr, 0, $errno, $errfile, $errline );
+				$exception = null;
+				if (ini_get ( 'display_errors' )) {
+					$exception = new ErrorException ( $errstr, 0, $errno, $errfile, $errline );
+					if (! Yaf_Dispatcher::getInstance ()->getRequest ()->isCli ()) {
+						echo '<pre>';
+					}
+					echo $exception;
+				}
+				if (ini_get ( 'log_errors' )) {
+					if (! isset ( $exception )) {
+						$exception = new ErrorException ( $errstr, 0, $errno, $errfile, $errline );
+					}
+					error_log ( $exception->__toString () . "\n" );
+				}
+				if ($errno == E_USER_ERROR) {
+					exit ();
+				}
 			}
 		}, ini_get ( 'error_reporting' ) );
 	}
@@ -129,7 +145,7 @@ class MyYaf_Bootstrap {
 	}
 	
 	/**
-	 * moduleName|controller_name?key1=>value1&key2=value2
+	 * e.g. php index.php moduleName%controller_name?key1=>value1&key2=value2
 	 */
 	private function _initCli() {
 		$request = Yaf_Dispatcher::getInstance ()->getRequest ();
