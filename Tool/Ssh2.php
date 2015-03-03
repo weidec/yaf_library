@@ -1,22 +1,16 @@
 <?php
 
-namespace _lib;
-
-use ErrorException;
-
 /**
- * 开发版没有严格测试
- * 非命令行模式不会验证服务器指纹
  *
- * @author Ares
+ * @author admin@phpdr.net
  *
  */
-class Ssh2 {
+class Tool_Ssh2 {
 	private $conn;
 	private $shell;
 	private $stdin;
 	private $stdout;
-
+	
 	/**
 	 *
 	 * @param array $config
@@ -27,12 +21,12 @@ class Ssh2 {
 	 */
 	function __construct($config) {
 		$conn = ssh2_connect ( $config ['host'], $config ['port'], array (
-				'hostkey' => $config ['hostkey']
+				'hostkey' => $config ['hostkey'] 
 		), array (
 				'disconnect' => array (
 						$this,
-						'disconnect'
-				)
+						'disconnect' 
+				) 
 		) );
 		$fp = ssh2_fingerprint ( $conn, SSH2_FINGERPRINT_MD5 );
 		$fpOK = false;
@@ -59,44 +53,40 @@ class Ssh2 {
 			}
 		}
 		if (! $fpOK) {
-			throw new ErrorException ( 'server fingerprint is ' . $fp . ', provided is ' . $config ['fingerprint'], ' , not match!' );
+			user_error ( 'server fingerprint is ' . $fp . ', provided is ' . $config ['fingerprint'], ' , not match!', E_USER_WARNING );
 		}
 		$this->conn = $conn;
 		$this->shell = ssh2_shell ( $conn, null, null, 1024 );
 	}
-
+	
 	/**
-	 * 密码认证
 	 *
-	 * @param unknown $user
-	 * @param unknown $pass
-	 * @throws ErrorException
+	 * @param unknown $user        	
+	 * @param unknown $pass        	
 	 */
 	function authPass($user, $pass) {
 		if (! ssh2_auth_password ( $this->conn, $user, $pass )) {
-			throw new ErrorException ( 'Password Authentication Failed' );
+			user_error ( 'Password Authentication Failed', E_USER_ERROR );
 		}
 	}
-
+	
 	/**
-	 * 密钥认证
 	 *
-	 * @param unknown $user
-	 * @param unknown $pubKey
-	 * @param unknown $priKey
-	 * @param unknown $phrase
-	 * @throws ErrorException
+	 * @param unknown $user        	
+	 * @param unknown $pubKey        	
+	 * @param unknown $priKey        	
+	 * @param unknown $phrase        	
 	 */
 	function authKey($user, $pubKey, $priKey, $phrase) {
 		if (! ssh2_auth_pubkey_file ( $this->conn, $user, $pubKey, $priKey, $phrase )) {
-			throw new ErrorException ( 'Public Key Authentication Failed' );
+			user_error ( 'Public Key Authentication Failed', E_USER_ERROR );
 		}
 	}
-
+	
 	/**
-	 * 执行一个linux命令
+	 * execute a linux command
 	 *
-	 * @param unknown $cmd
+	 * @param unknown $cmd        	
 	 */
 	function exec($cmd) {
 		$result = array ();
@@ -105,19 +95,16 @@ class Ssh2 {
 		$result ['out'] = stream_get_contents ( ssh2_fetch_stream ( $stream, SSH2_STREAM_STDIO ) );
 		return $result;
 	}
-
+	
 	/**
-	 * 命令行模式下执行一个shell
-	 *
-	 * @throws ErrorException
+	 * get a shell in command line
 	 */
 	function shell() {
 		if (PHP_SAPI != 'cli') {
-			throw new ErrorException ( 'shell method can only be called in php cli mode' );
+			user_error ( 'shell method can only be called in php cli mode', E_USER_ERROR );
 		}
-		// 最后一条命令
 		$last = '';
-		// 先结束shell，再结束while
+		// quit shell first and quite while loop second
 		$signalTerminate = false;
 		while ( true ) {
 			$cmd = $this->fread ( $this->stdin );
@@ -134,7 +121,7 @@ class Ssh2 {
 				break;
 			}
 			if (in_array ( trim ( $cmd ), array (
-					'exit'
+					'exit' 
 			) )) {
 				$signalTerminate = true;
 			}
@@ -144,20 +131,20 @@ class Ssh2 {
 			}
 		}
 	}
-
+	
 	/**
-	 * 解决windows命令行的读取问题，没有别的办法
+	 * solved windows command line read problem,no better way
 	 */
 	private function fread($fd) {
 		static $data = '';
 		$read = array (
-				$fd
+				$fd 
 		);
 		$write = array ();
 		$except = array ();
 		$result = stream_select ( $read, $write, $except, 0, 1000 );
 		if ($result === false)
-			throw new ErrorException ( 'stream_select failed' );
+			user_error ( 'stream_select failed', E_USER_WARNING );
 		if ($result !== 0) {
 			$c = stream_get_line ( $fd, 1 );
 			if ($c != chr ( 13 ))

@@ -3,13 +3,11 @@ class Function_Debug {
 }
 
 /**
- * 用易读方式输出格式化数据
  *
  * @param mixed $data        	
  * @param boolean $continue        	
- * @param boolean $return
- *        	如果为true，$continue将不起作用
- * @return string 如果指定第三个参数为true才有返回值
+ * @param boolean $return        	
+ * @return string
  */
 function printr($data, $continue = false, $return = false) {
 	$str = '';
@@ -28,13 +26,11 @@ function printr($data, $continue = false, $return = false) {
 }
 
 /**
- * 用易读方式输出格式化数据
  *
  * @param mixed $data        	
  * @param boolean $continue        	
- * @param boolean $return
- *        	如果为true，$continue将不起作用
- * @return string 如果指定第三个参数为true才有返回值
+ * @param boolean $return        	
+ * @return string
  */
 function vardump($data, $continue = false, $return = false) {
 	ob_start ();
@@ -54,7 +50,6 @@ function vardump($data, $continue = false, $return = false) {
 }
 
 /**
- * 用易读格式输出内存使用率
  *
  * @param mixed $true        	
  */
@@ -63,10 +58,9 @@ function mem_usage($true = false, $precision = 3) {
 }
 
 /**
- * 连续两次调用可以获取程序运行时间
- *
- * @param boolean $continue
- *        	是否继续执行程序
+ * get execution time in second call
+ * 
+ * @param boolean $continue        	
  */
 function runtime($continue = false) {
 	static $start = null;

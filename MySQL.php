@@ -6,7 +6,7 @@
  */
 class MySQL extends PDO {
 	/**
-	 * 插入一条记录
+	 * insert a single row
 	 *
 	 * @param unknown $table        	
 	 * @param unknown $data        	
@@ -25,15 +25,12 @@ class MySQL extends PDO {
 	}
 	
 	/**
-	 * 批量插入
+	 * insert rows
 	 *
 	 * @param string $table        	
-	 * @param string|array $cols
-	 *        	插入的列
-	 * @param
-	 *        	string 逗号分隔的列
+	 * @param string|array $cols        	
 	 * @param mixed $data
-	 *        	必须是一个多维数组，可以是数字数组或关联数组
+	 *        	two dimension
 	 * @param string $type
 	 *        	null,duplicate,ignore
 	 * @return mixed
@@ -77,7 +74,7 @@ class MySQL extends PDO {
 	}
 	
 	/**
-	 * 更新数据库记录
+	 * update
 	 *
 	 * @param string $table        	
 	 * @param array $data        	

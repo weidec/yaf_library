@@ -1,29 +1,25 @@
 <?php
-class System {
+class Helper_System {
 	
 	/**
-	 * <pre>
-	 * cli模式下非阻塞方式检测相同的PHP进程是否正在运行,相同的PHP进程指route相同的PHP进程。
-	 * 如果锁文件被其他程序锁定也会认为程序正在运行
-	 * </pre>
+	 * sync php process by flock
 	 *
-	 * @throws ErrorException
 	 * @return boolean
 	 */
-	static function syncProcess($pidFile) {
+	static function syncProcess($pidFile, $processIdentifier) {
 		if (PHP_SAPI != 'cli') {
-			throw new ErrorException ( __METHOD__ . ' can only run in php cli' );
+			user_error ( __METHOD__ . ' can only run in php cli', E_USER_WARNING );
+			return false;
 		}
 		if (PHP_OS != 'Linux') {
-			throw new ErrorException ( __METHOD__ . ' can only run in Linux' );
+			user_error ( __METHOD__ . ' can only run in Linux', E_USER_WARNING );
+			return false;
 		}
-		$app = Ares::app ();
-		$route = $app->getRoute ();
-		if (! is_array ( $route ) || empty ( $route )) {
-			throw new ErrorException ( 'route is invalid' );
+		if (! is_array ( $processIdentifier ) || empty ( $processIdentifier )) {
+			user_error ( 'process identifier is invalid', E_USER_WARNING );
+			return false;
 		}
-		$key = md5 ( $app->getRoute ( null, true ) );
-		
+		$key = md5 ( $processIdentifier );
 		$running = true;
 		clearstatcache ( true, $pidFile );
 		if (! file_exists ( $pidFile ))
@@ -38,7 +34,7 @@ class System {
 			if (! self::isProcessRunning ( $pid ) || ! self::isPhpProcess ( $pid )) {
 				$running = false;
 			}
-			// 清理
+			// clean up
 			$gcProb = 0.1;
 			if (rand ( 1, 100 ) <= $gcProb * 100) {
 				foreach ( $pidList as $k => $v ) {
@@ -60,7 +56,6 @@ class System {
 	}
 	
 	/**
-	 * 如果正在运行或者发生未知错误返回true，如果没有运行返回false
 	 *
 	 * @param mixed $pid        	
 	 */
@@ -69,7 +64,6 @@ class System {
 			if (is_numeric ( $pid ) && $pid > 0) {
 				$output = array ();
 				$line = exec ( "ps -o pid --no-headers -p $pid", $output );
-				// 返回值有空格
 				$line = trim ( $line );
 				if ($line == $pid) {
 					return true;
@@ -82,20 +76,20 @@ class System {
 						} else {
 							$n = "<br>";
 						}
-						// 到这一步的话应该是出什么问题了
+						// abnormal
 						$output = implode ( $n, $output );
+						user_error ( 'something wrong happend, msg=' . $output, E_USER_WARNING );
 					}
 				}
 			} else {
 				return false;
 			}
 		} else {
-			throw new ErrorException ( 'is_process_running() can only run in linux' );
+			user_error ( 'is_process_running() can only run in linux', E_USER_ERROR );
 		}
 	}
 	
 	/**
-	 * 测试运行的进程是否是php进程，只能在php命令行中运行
 	 *
 	 * @param int $pid        	
 	 * @return boolean
@@ -111,7 +105,7 @@ class System {
 						$r = true;
 					}
 				}
-				// 如果权限不够需要用这种方法补充判断一下
+				// additional check method if no privilege
 				if (false == $r) {
 					if (isset ( $_SERVER ['_'] ) && '/php' == substr ( $_SERVER ['_'], - 4 )) {
 						$r = true;
@@ -120,7 +114,7 @@ class System {
 			}
 			return $r;
 		} else {
-			throw new ErrorException ( __METHOD__ . " can only be run in linux cli" );
+			user_error ( 'Must be used in linux and cli mode', E_USER_ERROR );
 		}
 	}
 }
