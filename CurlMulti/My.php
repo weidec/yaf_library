@@ -26,15 +26,6 @@ class CurlMulti_My {
 	}
 	
 	/**
-	 * replace curlmulti use yours
-	 *
-	 * @param unknown $curlmulti        	
-	 */
-	function setCurl($curlmulti) {
-		$this->curl = $curlmulti;
-	}
-	
-	/**
 	 * 16^3=4096,4096^2=16777216,4096^3=68719476736
 	 *
 	 * @param string $name        	
@@ -301,7 +292,7 @@ class CurlMulti_My {
 	}
 	
 	/**
-	 * urlCurrent should be redirected final url.Final url normally has '/' suffix.
+	 * url should be redirected final url.Final url normally has '/' suffix.
 	 *
 	 * @param unknown $url
 	 *        	the final directed url
@@ -320,7 +311,7 @@ class CurlMulti_My {
 	}
 	
 	/**
-	 * get CurlMulti instance
+	 * get CurlMulti_Core instance
 	 *
 	 * @return CurlMulti
 	 */
