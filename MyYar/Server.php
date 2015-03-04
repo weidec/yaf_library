@@ -83,6 +83,7 @@ class MyYar_Server {
 				throw new Yar_Server_Exception ( 'request timeout' );
 			}
 		}
+		// sign check
 		$signOk = false;
 		if (array_key_exists ( 'sign', $param )) {
 			$signRemote = $param ['sign'];
@@ -95,7 +96,18 @@ class MyYar_Server {
 		if (! $signOk) {
 			throw new Yar_Server_Exception ( 'sign error' );
 		}
+		// class check
 		list ( $className, $method ) = explode ( '.', $name );
+		$classnameOk = false;
+		foreach ( $this->classNames as $v ) {
+			if (fnmatch ( $v, $className )) {
+				$classnameOk = true;
+				break;
+			}
+		}
+		if (! $classnameOk) {
+			throw new Yar_Server_Exception ( 'class is not allowed, classname=' . $className );
+		}
 		$class = new $className ();
 		return call_user_func_array ( array (
 				$class,
