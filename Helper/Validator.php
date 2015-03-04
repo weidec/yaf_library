@@ -43,4 +43,20 @@ class Helper_Validator {
 		$p = '/^[a-z]([a-z0-9]*[-_]?[a-z0-9]+)*@([a-z0-9]*[-_]?[a-z0-9]+)+[\.][a-z]{2,3}([\.][a-z]{2})?$/i';
 		return ( bool ) preg_match ( $p, $str );
 	}
+	
+	/**
+	 *
+	 * @param unknown $str        	
+	 * @return boolean
+	 */
+	static function idcard($str) {
+		if (strlen ( $str ) == 15) {
+			$p = '/^[1-9]\d{7}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{3}$/i';
+		} elseif (strlen ( $str ) == 18) {
+			$p = '/^[1-9]\d{5}[1-9]\d{3}((0\d)|(1[0-2]))(([0|1|2]\d)|3[0-1])\d{4}$/i';
+		} else {
+			return false;
+		}
+		return ( bool ) preg_match ( $p, $str );
+	}
 }
