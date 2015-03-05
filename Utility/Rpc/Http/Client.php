@@ -2,6 +2,7 @@
 class Utility_Rpc_Http_Client {
 	private $conf;
 	private $className;
+	private $url;
 	
 	/**
 	 *
@@ -44,10 +45,19 @@ class Utility_Rpc_Http_Client {
 		$req ['sign'] = md5 ( $time . $this->conf->key );
 		$req ['args'] = json_encode ( $args );
 		$query = '?' . http_build_query ( $req );
-		$url = rtrim ( $this->conf->url, '/' ) . $query;
-		$res = $this->fetch ( $url );
-		$res = json_decode ( $res );
+		$this->url = rtrim ( $this->conf->url, '/' ) . $query;
+		$res = $this->fetch ( $this->url );
+		if (0 === strpos ( $res, '{"' )) {
+			$res = json_decode ( $res );
+		}
 		return $res;
+	}
+	/**
+	 * 
+	 * @return string
+	 */
+	function getLastUrl() {
+		return $this->url;
 	}
 	private function fetch($url) {
 		$opt = array ();

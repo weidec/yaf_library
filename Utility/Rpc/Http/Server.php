@@ -112,6 +112,9 @@ class Utility_Rpc_Http_Server {
 					$method 
 			), $args );
 		} catch ( Exception $e ) {
+			if (ini_get ( 'log_errors' )) {
+				error_log ( $e->__toString () . "\n" );
+			}
 			if ($e instanceof Utility_Rpc_Http_Server_Exception) {
 				$res ['errorMsg'] = 'http server serror: ' . $e->getMessage ();
 			} else {
