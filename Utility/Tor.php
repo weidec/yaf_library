@@ -4,7 +4,7 @@
  *
  * @author admin@phpdr.net
  */
-class Tool_Tor {
+class Utility_Tor {
 	private $controlPassword = 'tor321';
 	private $tor;
 	function __construct($port) {

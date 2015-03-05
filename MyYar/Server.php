@@ -59,24 +59,23 @@ class MyYar_Server {
 	function api($name, $param) {
 		// client check
 		$clientOk = false;
-		if (array_key_exists ( 'clientId', $param )) {
-			if (array_key_exists ( $param ['clientId'], self::$conf )) {
+		if (array_key_exists ( 'id', $param )) {
+			if (array_key_exists ( $param ['id'], self::$conf )) {
 				$clientOk = true;
-				$conf = ( object ) self::$conf [$param ['clientId']];
+				$conf = ( object ) self::$conf [$param ['id']];
 			}
 		}
 		if (! $clientOk) {
 			throw new Yar_Server_Exception ( 'client not found' );
 		}
-		// timeout check
+		// time and timeout check
+		if (! array_key_exists ( 'time', $param ) || 10 != strlen ( $param ['time'] )) {
+			throw new Yar_Server_Exception ( 'time not specified' );
+		}
 		if (isset ( $conf->timeout )) {
 			$timeoutOk = false;
-			if (array_key_exists ( 'time', $param )) {
-				$timeoutRemote = $param ['time'];
-				if (time () - $timeoutRemote <= $conf->timeout) {
-					$timeoutOk = true;
-				}
-			} else {
+			$timeoutRemote = $param ['time'];
+			if (time () - $timeoutRemote <= $conf->timeout) {
 				$timeoutOk = true;
 			}
 			if (! $timeoutOk) {
@@ -87,8 +86,7 @@ class MyYar_Server {
 		$signOk = false;
 		if (array_key_exists ( 'sign', $param )) {
 			$signRemote = $param ['sign'];
-			$args = $param ['args'];
-			$sign = md5 ( $name . serialize ( $args ) . $conf->key );
+			$sign = md5 ( $param ['time'] . $conf->key );
 			if ($sign == $signRemote) {
 				$signOk = true;
 			}
@@ -96,7 +94,16 @@ class MyYar_Server {
 		if (! $signOk) {
 			throw new Yar_Server_Exception ( 'sign error' );
 		}
+		// args
+		if (! array_key_exists ( 'args', $param ) || empty ( $param ['args'] )) {
+			$args = array ();
+		} else {
+			$args = $param ['args'];
+		}
 		// class check
+		if (false === strpos ( $name, '.' )) {
+			throw new Yar_Server_Exception ( 'method name is invalid, name=' . $name );
+		}
 		list ( $className, $method ) = explode ( '.', $name );
 		$classnameOk = false;
 		foreach ( $this->classNames as $v ) {

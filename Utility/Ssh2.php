@@ -5,7 +5,7 @@
  * @author admin@phpdr.net
  *
  */
-class Tool_Ssh2 {
+class Utility_Ssh2 {
 	private $conn;
 	private $shell;
 	private $stdin;

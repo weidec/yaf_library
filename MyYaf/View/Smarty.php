@@ -39,7 +39,7 @@ class MyYaf_View_Smarty implements Yaf_View_Interface {
 			return;
 		}
 		
-		throw new Yaf_Exception_LoadFailed_View( 'Invalid path provided' );
+		throw new Yaf_Exception_LoadFailed_View ( 'Invalid path provided' );
 	}
 	public function getScriptPath() {
 		return $this->_smarty->template_dir;
@@ -74,12 +74,28 @@ class MyYaf_View_Smarty implements Yaf_View_Interface {
 	 *
 	 * @param string $name
 	 *        	The template to process.
+	 * @param array $value        	
 	 * @return string The output.
 	 */
 	public function render($name, $value = NULL) {
+		if (isset ( $value )) {
+			$this->_smarty->assign ( $value );
+		}
 		return $this->_smarty->fetch ( $name );
 	}
+	
+	/**
+	 * output
+	 *
+	 * @param string $name
+	 *        	The template to process.
+	 * @param array $value        	
+	 * @see Yaf_View_Interface::display()
+	 */
 	public function display($name, $value = NULL) {
+		if (isset ( $value )) {
+			$this->assign ( $value );
+		}
 		echo $this->_smarty->fetch ( $name );
 	}
 }

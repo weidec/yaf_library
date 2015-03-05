@@ -44,11 +44,12 @@ class MyYar_Client {
 	 */
 	function __call($name, $args) {
 		$name = $this->className . '.' . $name;
-		$sign = md5 ( $name . serialize ( $args ) . $this->conf->key );
+		$time = time ();
+		$sign = md5 ( $time . $this->conf->key );
 		$param = array (
-				'clientId' => $this->conf->clientId,
+				'id' => $this->conf->clientId,
 				'sign' => $sign,
-				'time' => time (),
+				'time' => $time,
 				'args' => $args 
 		);
 		return $this->client->api ( $name, $param );
