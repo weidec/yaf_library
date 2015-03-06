@@ -29,15 +29,14 @@ class Utility_BaiduPCS extends BaiduPCS {
 		$this->tokenFile = $param ['tokenFile'];
 		$this->clientID = $param ['clientID'];
 		$this->clientSecret = $param ['clientSecret'];
-		$fileData = file_get_contents ( $this->tokenFile );
-		if (! empty ( $fileData )) {
-			$token = unserialize ( $fileData );
+		$fileData = '';
+		if (is_file ( $this->tokenFile )) {
+			$fileData = file_get_contents ( $this->tokenFile );
 		}
-		if (empty ( $token )) {
+		if (empty ( $fileData )) {
 			user_error ( "token not found", E_USER_ERROR );
-			return false;
 		}
-		$token = json_decode ( $token );
+		$token = json_decode ( $fileData );
 		$url = 'https://pcs.baidu.com/rest/2.0/pcs/quota?method=info&access_token=' . $token->access_token;
 		$r = null;
 		$this->curl = new CurlMulti_Core ();
@@ -94,7 +93,9 @@ class Utility_BaiduPCS extends BaiduPCS {
 		$return = null;
 		$this->curl->cbInfo = function ($info) use($file, $size) {
 			$row = array_pop ( $info ['running'] );
-			echo "\r\33[2K" . $row ['size_upload'] . '/' . $size . "\t" . round ( $row ['size_upload'] / $size * 100, 2 ) . '% (' . round ( $row ['speed_upload'] / 1024, 0 ) . 'k/s)';
+			if (! empty ( $row ['size_upload'] )) {
+				echo "\r\33[2K" . $row ['size_upload'] . '/' . $size . "\t" . round ( $row ['size_upload'] / $size * 100, 2 ) . '% (' . round ( $row ['speed_upload'] / 1024, 0 ) . 'k/s)';
+			}
 		};
 		$this->curl->add ( array (
 				'url' => $url,
@@ -145,7 +146,7 @@ class Utility_BaiduPCS extends BaiduPCS {
 		), function ($r) use(&$token) {
 			$token = $r ['content'];
 		} )->start ();
-		file_put_contents ( $tokenFile, $token );
+		file_put_contents ( $tokenFile, $token, LOCK_EX );
 		return $token;
 	}
 }
