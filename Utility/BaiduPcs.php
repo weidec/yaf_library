@@ -4,7 +4,7 @@
  * @author admin@phpdr.net
  *        
  */
-class MyBaiduPCS extends BaiduPCS {
+class Utility_BaiduPCS extends BaiduPCS {
 	private $clientID;
 	private $clientSecret;
 	private $curl;
@@ -18,27 +18,29 @@ class MyBaiduPCS extends BaiduPCS {
 	 */
 	function __construct($param = array()) {
 		if (empty ( $param ['tokenFile'] )) {
-			user_error ( 'tokenFile not specified', E_USER_WARNING );
+			user_error ( 'tokenFile not specified', E_USER_ERROR );
 		}
 		if (empty ( $param ['clientID'] )) {
-			user_error ( 'clientID not set', E_USER_WARNING );
+			user_error ( 'clientID not set', E_USER_ERROR );
 		}
 		if (empty ( $param ['clientSecret'] )) {
-			user_error ( 'clientSecret not set', E_USER_WARNING );
+			user_error ( 'clientSecret not set', E_USER_ERROR );
 		}
 		$this->tokenFile = $param ['tokenFile'];
 		$this->clientID = $param ['clientID'];
 		$this->clientSecret = $param ['clientSecret'];
-		$fileData = new Ares_FileData ( $this->tokenFile );
-		$token = $fileData->get ();
-		if (! isset ( $token ) || empty ( $token )) {
-			user_error ( "token not found", E_USER_WARNING );
+		$fileData = file_get_contents ( $this->tokenFile );
+		if (! empty ( $fileData )) {
+			$token = unserialize ( $fileData );
 		}
-		$this->curl = new CurlMulti_Core ();
+		if (empty ( $token )) {
+			user_error ( "token not found", E_USER_ERROR );
+			return false;
+		}
 		$token = json_decode ( $token );
-		$this->tokenCheck ( $token );
 		$url = 'https://pcs.baidu.com/rest/2.0/pcs/quota?method=info&access_token=' . $token->access_token;
 		$r = null;
+		$this->curl = new CurlMulti_Core ();
 		$this->curl->add ( array (
 				'url' => $url 
 		), function ($result) use(&$r) {
@@ -48,34 +50,24 @@ class MyBaiduPCS extends BaiduPCS {
 				user_error ( 'http error, http_code=' . $result ['info'] ['http_code'] . ', url=' . $result ['info'] ['url'], E_USER_WARNING );
 			}
 		}, function ($err) {
-			user_error ( 'curl error, ' . $err ['error'] [0] . ': ' . $err ['error'] [1], E_USER_WARNING );
+			user_error ( 'curl error, ' . $err ['error'] [0] . ': ' . $err ['error'] [1], E_USER_ERROR );
 		} )->start ();
 		$r = json_decode ( $r ['content'] );
-		if (isset ( $r->error_code )) {
-			if ($r->error_code == 111) {
-				$token = json_decode ( $this->tokenRefresh ( $token->refresh_token ) );
-			}
+		if (isset ( $r->error_code ) && $r->error_code == 111) {
+			$token = json_decode ( $this->tokenRefresh ( $token->refresh_token ) );
 		}
-		$this->tokenCheck ( $token );
-		parent::__construct ( $token->access_token );
-	}
-	/**
-	 * 检查一个对象形式的token是否可用，如果不可用程序退出
-	 *
-	 * @param unknown $token        	
-	 */
-	private function tokenCheck($token) {
 		if (isset ( $token->error )) {
-			$msg = "token is invalid, error=" . $token->error;
+			$msg = $token->error;
 			if (isset ( $token->error_description )) {
 				$msg .= ', ' . $token->error_description;
 			}
-			user_error ( $msg, E_USER_WARNING );
+			user_error ( $msg, E_USER_ERROR );
 		}
+		parent::__construct ( $token->access_token );
 	}
 	
 	/**
-	 * curl上传文件，默认的上传函数文件有多大就占用多大的内存
+	 * curl upload.The SDK method read the whole file to memory and then upload it...
 	 *
 	 * @param unknown $file        	
 	 * @return array false
@@ -85,9 +77,6 @@ class MyBaiduPCS extends BaiduPCS {
 			return false;
 		}
 		$size = filesize ( $file );
-		if (0 == $size) {
-			user_error ( "file size is 0, file=" . $file, E_USER_WARNING );
-		}
 		$url = 'https://c.pcs.baidu.com/rest/2.0/pcs/file?method=upload&path=' . urlencode ( $remoteFile ) . '&access_token=' . $this->getAccessToken ();
 		$opt = array ();
 		$timeout = $size / 1024 / 5;
@@ -117,10 +106,7 @@ class MyBaiduPCS extends BaiduPCS {
 	}
 	
 	/**
-	 * 获得一个accesstoken，这个方法应该在controller的action中调用
-	 *
-	 * @param unknown $url
-	 *        	调用此方法的url
+	 * get an accesstoken.The method should be called in controller.
 	 */
 	static function tokenInit($callbackUrl, $clientID, $clientSecret, $tokenFile, $code = null) {
 		if (! isset ( $code )) {
@@ -139,8 +125,7 @@ class MyBaiduPCS extends BaiduPCS {
 	}
 	
 	/**
-	 * 用刷新token获取一个access
-	 * token
+	 * get and accesstoken use fresh token
 	 */
 	private function tokenRefresh($refreshToken) {
 		$url = "https://openapi.baidu.com/oauth/2.0/token?grant_type=refresh_token&refresh_token=$refreshToken&client_id=" . $this->clientID . "&client_secret=" . $this->clientSecret . "&scope=basic netdisk";
@@ -148,20 +133,19 @@ class MyBaiduPCS extends BaiduPCS {
 	}
 	
 	/**
-	 * 保存token到文件
+	 * save token to file
 	 *
 	 * @param unknown $token        	
 	 */
 	private static function tokenSave($url, $tokenFile) {
 		$token = null;
-		$data = new Ares_FileData ( $tokenFile );
 		$curl = new CurlMulti_Core ();
 		$curl->add ( array (
 				'url' => $url 
 		), function ($r) use(&$token) {
 			$token = $r ['content'];
 		} )->start ();
-		$data->put ( $token );
+		file_put_contents ( $tokenFile, $token );
 		return $token;
 	}
 }

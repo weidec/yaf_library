@@ -1,5 +1,5 @@
 <?php
-class MyYar_Client {
+class Utility_Rpc_Yar_Client {
 	private $conf;
 	private $className;
 	private $client;

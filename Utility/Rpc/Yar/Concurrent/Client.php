@@ -1,6 +1,5 @@
 <?php
-class MyYaf_Rpc_Yar_Concurrent_Client {
-	use MyYaf_Rpc_Yar_Util;
+class Utility_Rpc_Yar_Concurrent_Client {
 	static function call($name, $method, $args = array(), $callback = null) {
 		$conf = self::getConf ( $name );
 		$sign = md5 ( $method . serialize ( $args ) . $conf->key );

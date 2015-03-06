@@ -4,7 +4,7 @@
  * @author admin@phpdr.net
  *
  */
-class QQIp {
+class Utility_ChunZhenIp {
 	private $file;
 	function __construct($dataFile) {
 		$this->file = $dataFile;
