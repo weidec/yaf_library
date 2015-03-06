@@ -36,7 +36,7 @@ class Utility_Rpc_Http_Client {
 	 *
 	 * @param string $name        	
 	 */
-	function __call($name, $args) {
+	function __call($name, $args = array()) {
 		$time = time ();
 		$req = array ();
 		$req ['id'] = $this->conf->clientId;
@@ -53,7 +53,7 @@ class Utility_Rpc_Http_Client {
 		return $res;
 	}
 	/**
-	 * 
+	 *
 	 * @return string
 	 */
 	function getLastUrl() {

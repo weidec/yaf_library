@@ -107,10 +107,14 @@ class Utility_Rpc_Http_Server {
 				throw new Utility_Rpc_Http_Server_Exception ( 'class is not allowed, classname=' . $className );
 			}
 			$class = new $className ();
-			$res ['res'] = call_user_func_array ( array (
+			$cb = array (
 					$class,
 					$method 
-			), $args );
+			);
+			if (! is_callable ( $cb )) {
+				throw new Utility_Rpc_Http_Server_Exception ( 'api method not callable, method=' . $param ['method'] );
+			}
+			$res ['res'] = call_user_func_array ( $cb, $args );
 		} catch ( Exception $e ) {
 			if (ini_get ( 'log_errors' )) {
 				error_log ( $e->__toString () . "\n" );
