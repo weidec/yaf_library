@@ -24,7 +24,7 @@ class Rpc_Http_Client {
 		$this->conf = new stdClass ();
 		foreach ( $keys as $v ) {
 			if (! array_key_exists ( $v, $conf )) {
-				throw new Utility_Rpc_Http_Client_Exception ( "$v not set in \$conf" );
+				throw new Rpc_Http_Client_Exception ( "$v not set in \$conf" );
 			}
 			$this->conf->$v = $conf [$v];
 		}

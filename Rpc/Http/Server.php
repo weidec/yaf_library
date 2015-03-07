@@ -12,7 +12,7 @@ class Rpc_Http_Server {
 	static function initConfig(array $conf) {
 		foreach ( $conf as $k => $v ) {
 			if (! array_key_exists ( 'key', $v )) {
-				throw new Utility_Rpc_Http_Server_Exception ( 'key not found, clientId=' . $k );
+				throw new Rpc_Http_Server_Exception ( 'key not found, clientId=' . $k );
 			}
 		}
 		foreach ( $conf as $k => $v ) {
@@ -29,12 +29,12 @@ class Rpc_Http_Server {
 	 *
 	 * @param array $classNames
 	 *        	wildcards
-	 * @throws Utility_Rpc_Http_Server_Exception
+	 * @throws Rpc_Http_Server_Exception
 	 * @return Yar_Server
 	 */
 	static function factory(array $classNames) {
 		if (! isset ( self::$conf )) {
-			throw new Utility_Rpc_Http_Server_Exception ( 'conf is not set yet' );
+			throw new Rpc_Http_Server_Exception ( 'conf is not set yet' );
 		}
 		return new self ( $classNames );
 	}
@@ -52,7 +52,7 @@ class Rpc_Http_Server {
 	 *
 	 * @param unknown $name        	
 	 * @param unknown $param        	
-	 * @throws Utility_Rpc_Http_Server_Exceptionn
+	 * @throws Rpc_Http_Server_Exceptionn
 	 * @return mixed
 	 */
 	function handle() {
@@ -70,7 +70,7 @@ class Rpc_Http_Server {
 				$conf = ( object ) self::$conf [$param ['id']];
 			}
 			if (! $clientOk) {
-				throw new Utility_Rpc_Http_Server_Exception ( 'client not found' );
+				throw new Rpc_Http_Server_Exception ( 'client not found' );
 			}
 			// timeout check
 			if (isset ( $conf->timeout )) {
@@ -80,7 +80,7 @@ class Rpc_Http_Server {
 					$timeoutOk = true;
 				}
 				if (! $timeoutOk) {
-					throw new Utility_Rpc_Http_Server_Exception ( 'request timeout' );
+					throw new Rpc_Http_Server_Exception ( 'request timeout' );
 				}
 			}
 			// sign check
@@ -91,7 +91,7 @@ class Rpc_Http_Server {
 				$signOk = true;
 			}
 			if (! $signOk) {
-				throw new Utility_Rpc_Http_Server_Exception ( 'sign error' );
+				throw new Rpc_Http_Server_Exception ( 'sign error' );
 			}
 			$args = $param ['args'];
 			// class check
@@ -104,7 +104,7 @@ class Rpc_Http_Server {
 				}
 			}
 			if (! $classnameOk) {
-				throw new Utility_Rpc_Http_Server_Exception ( 'class is not allowed, classname=' . $className );
+				throw new Rpc_Http_Server_Exception ( 'class is not allowed, classname=' . $className );
 			}
 			$class = new $className ();
 			$cb = array (
@@ -112,14 +112,14 @@ class Rpc_Http_Server {
 					$method 
 			);
 			if (! is_callable ( $cb )) {
-				throw new Utility_Rpc_Http_Server_Exception ( 'api method not callable, method=' . $param ['method'] );
+				throw new Rpc_Http_Server_Exception ( 'api method not callable, method=' . $param ['method'] );
 			}
 			$res ['res'] = call_user_func_array ( $cb, $args );
 		} catch ( Exception $e ) {
 			if (ini_get ( 'log_errors' )) {
 				error_log ( $e->__toString () . "\n" );
 			}
-			if ($e instanceof Utility_Rpc_Http_Server_Exception) {
+			if ($e instanceof Rpc_Http_Server_Exception) {
 				$res ['errorMsg'] = 'http server serror: ' . $e->getMessage ();
 			} else {
 				$res ['errorMsg'] = $e->getMessage ();
@@ -143,13 +143,13 @@ class Rpc_Http_Server {
 		);
 		foreach ( $keys as $v ) {
 			if (! array_key_exists ( $v, $param ) && empty ( $param [$v] )) {
-				throw new Utility_Rpc_Http_Server_Exception ( 'param ' . $v . ' not found' );
+				throw new Rpc_Http_Server_Exception ( 'param ' . $v . ' not found' );
 			}
 			$req [$v] = $param [$v];
 		}
 		// method
 		if (false === strpos ( $param ['method'], '.' )) {
-			throw new Utility_Rpc_Http_Server_Exception ( 'method is invalid, method=' . $param ['method'] );
+			throw new Rpc_Http_Server_Exception ( 'method is invalid, method=' . $param ['method'] );
 		}
 		// args
 		if (! array_key_exists ( 'args', $param ) || empty ( $param ['args'] )) {
