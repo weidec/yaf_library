@@ -4,6 +4,7 @@
  * @author admin@phpdr.net
  *        
  */
+require dirname ( __DIR__ ) . '/lib/BaiduPcs-2.1.0/libs/BaiduPCS.class.php';
 class Utility_BaiduPCS extends BaiduPCS {
 	private $clientID;
 	private $clientSecret;

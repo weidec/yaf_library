@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <buildpath>
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
-	<buildpathentry excluding="lib/ZendFramework-1.12.11/tests/|lib/php-phantomjs/php-phantomjs-linux-x64-3.1.5/vendor/phpunit/php-code-coverage/tests/|lib/php-phantomjs/php-phantomjs-linux-x64-3.1.5/vendor/phpunit/php-token-stream/tests/|lib/php-phantomjs/php-phantomjs-linux-x86-3.1.5/vendor/phpunit/php-code-coverage/tests/|lib/php-phantomjs/php-phantomjs-linux-x86-3.1.5/vendor/phpunit/php-token-stream/tests/" kind="src" path=""/>
+	<buildpathentry excluding="lib/php-phantomjs/php-phantomjs-linux-x64-3.1.5/vendor/phpunit/|lib/php-phantomjs/php-phantomjs-linux-x86-3.1.5/vendor/phpunit/" kind="src" path=""/>
 </buildpath>
