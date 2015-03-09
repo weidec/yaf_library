@@ -32,7 +32,7 @@ class Common {
 		set_error_handler ( function ($errno, $errstr, $errfile, $errline) {
 			// errors supressed by @ will cause error_reporting() always return 0
 			$r = error_reporting ();
-			if ($r != 0) {
+			if ($r & $errno) {
 				$exception = new ErrorException ( $errstr, 0, $errno, $errfile, $errline );
 				if ($errno == E_USER_ERROR || $errno == E_RECOVERABLE_ERROR) {
 					throw $exception;
@@ -47,7 +47,7 @@ class Common {
 					echo $exception;
 				}
 			}
-		}, ini_get ( 'error_reporting' ) );
+		} );
 	}
 	
 	/**
