@@ -23,7 +23,7 @@ class Threaded implements Traversable, Countable, ArrayAccess {
 	 *
 	 * @return Threaded
 	 */
-	public function from(Closure $run, Closure $construct = null, array $args = array());
+	public static function from(Closure $run, Closure $construct = null, array $args = array());
 	
 	/**
 	 *

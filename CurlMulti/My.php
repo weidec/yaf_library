@@ -6,7 +6,24 @@
  *
  */
 class CurlMulti_My {
+	private static $instance;
 	private $curl;
+	
+	/**
+	 *
+	 * @return CurlMulti_My
+	 */
+	static function getInstance() {
+		if (! isset ( self::$instance )) {
+			self::$instance = new static ();
+		}
+		return self::$instance;
+	}
+	
+	/**
+	 *
+	 * @param string $curlmulti        	
+	 */
 	function __construct($curlmulti = null) {
 		if (isset ( $curlmulti )) {
 			$this->curl = $curlmulti;

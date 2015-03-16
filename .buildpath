@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <buildpath>
 	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
-	<buildpathentry excluding="lib/php-phantomjs-3.1.5/vendor/phpunit/php-code-coverage/tests/_files/source_with_oneline_annotations.php|lib/php-phantomjs-3.1.5/vendor/phpunit/php-token-stream/tests/_fixture/issue30.php" kind="src" path=""/>
+	<buildpathentry kind="src" path=""/>
 </buildpath>
