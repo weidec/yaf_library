@@ -1,80 +1,61 @@
 <?php
 class Rpc_Yar_Server {
-	private static $conf;
-	private $classNames;
+	private $conf;
 	
 	/**
-	 * initialize configuration of server side
-	 * array key is clientId and value is conf,each conf contains key,timeout(second)
 	 *
-	 * @param array $conf        	
+	 * @param array $conf
+	 *        	id,key,url,timeout
 	 */
-	static function initConfig(array $conf) {
-		foreach ( $conf as $k => $v ) {
-			if (! array_key_exists ( 'key', $v )) {
-				throw new Yar_Server_Exception ( 'key not found, clientId=' . $k );
-			}
+	function __construct($conf) {
+		static $called = false;
+		if ($called) {
+			throw new Yar_Server_Exception ( 'method ' . __FUNCTION__ . ' not allowed' );
 		}
-		foreach ( $conf as $k => $v ) {
-			if (isset ( $v ['timeout'] ) && empty ( $v ['timeout'] )) {
-				unset ( $v ['timeout'] );
-			}
-			$conf [$k] = $v;
-		}
-		self::$conf = $conf;
-	}
-	
-	/**
-	 * get a server instance
-	 *
-	 * @param array $classNames
-	 *        	wildcards
-	 * @throws Yar_Server_Exception
-	 * @return Yar_Server
-	 */
-	static function factory(array $classNames) {
-		if (! isset ( self::$conf )) {
-			throw new Yar_Server_Exception ( 'conf is not set yet' );
-		}
-		return new Yar_Server ( new self ( $classNames ) );
+		$called = true;
+		$this->conf = $conf;
 	}
 	
 	/**
 	 *
-	 * @param unknown $clientId        	
-	 * @param unknown $classNames        	
+	 * @return boolean
 	 */
-	private function __construct($classNames) {
-		$this->classNames = $classNames;
+	function handle() {
+		static $called = false;
+		if ($called) {
+			throw new Yar_Server_Exception ( 'method ' . __FUNCTION__ . ' not allowed' );
+		}
+		$called = true;
+		$server = new Yar_Server ( new self () );
+		return $server->handle ();
 	}
 	
 	/**
-	 * Handle calls from MyYar_Client
 	 *
-	 * @param unknown $name        	
-	 * @param unknown $param        	
+	 * @param string $name        	
+	 * @param array $param        	
 	 * @throws Yar_Server_Exceptionn
 	 * @return mixed
 	 */
 	function api($name, $param) {
 		// client check
 		$clientOk = false;
-		if (array_key_exists ( 'id', $param )) {
-			if (array_key_exists ( $param ['id'], self::$conf )) {
+		if (array_key_exists ( '_id', $param )) {
+			if (array_key_exists ( $param ['_id'], self::$conf )) {
 				$clientOk = true;
-				$conf = ( object ) self::$conf [$param ['id']];
+				$conf = ( object ) self::$conf [$param ['_id']];
 			}
 		}
 		if (! $clientOk) {
 			throw new Yar_Server_Exception ( 'client not found' );
 		}
 		// time and timeout check
-		if (! array_key_exists ( 'time', $param ) || 10 != strlen ( $param ['time'] )) {
+		if (! array_key_exists ( '_time', $param ) || 10 != strlen ( $param ['_time'] )) {
 			throw new Yar_Server_Exception ( 'time not specified' );
 		}
-		if (isset ( $conf->timeout )) {
+		if (! empty ( $conf->timeout )) {
 			$timeoutOk = false;
-			$timeoutRemote = $param ['time'];
+			$timeoutRemote = $param ['_time'];
 			if (time () - $timeoutRemote <= $conf->timeout) {
 				$timeoutOk = true;
 			}
@@ -84,21 +65,15 @@ class Rpc_Yar_Server {
 		}
 		// sign check
 		$signOk = false;
-		if (array_key_exists ( 'sign', $param )) {
-			$signRemote = $param ['sign'];
-			$sign = md5 ( $param ['time'] . $conf->key );
+		if (array_key_exists ( '_sign', $param )) {
+			$signRemote = $param ['_sign'];
+			$sign = md5 ( $param ['_time'] . $conf->key );
 			if ($sign == $signRemote) {
 				$signOk = true;
 			}
 		}
 		if (! $signOk) {
 			throw new Yar_Server_Exception ( 'sign error' );
-		}
-		// args
-		if (! array_key_exists ( 'args', $param ) || empty ( $param ['args'] )) {
-			$args = array ();
-		} else {
-			$args = $param ['args'];
 		}
 		// class check
 		if (false === strpos ( $name, '.' )) {
@@ -119,6 +94,6 @@ class Rpc_Yar_Server {
 		return call_user_func_array ( array (
 				$class,
 				$method 
-		), $args );
+		), $param );
 	}
 }

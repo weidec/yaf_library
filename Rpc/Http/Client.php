@@ -1,23 +1,20 @@
 <?php
 class Rpc_Http_Client {
 	private $conf;
-	private $className;
 	private $url;
+	private $opt = array ();
 	
 	/**
 	 *
 	 * @param array|object $conf
-	 *        	clientId,url,key timeout is optional
-	 * @param string $className
-	 *        	remote className
-	 * @param string $key        	
+	 *        	id,url,key
 	 */
-	function __construct($conf, $className) {
+	function __construct($conf) {
 		if (is_object ( $conf )) {
 			$conf = ( array ) $conf;
 		}
 		$keys = array (
-				'clientId',
+				'id',
 				'url',
 				'key' 
 		);
@@ -28,7 +25,6 @@ class Rpc_Http_Client {
 			}
 			$this->conf->$v = $conf [$v];
 		}
-		$this->className = $className;
 	}
 	
 	/**
@@ -39,11 +35,11 @@ class Rpc_Http_Client {
 	function __call($name, $args = array()) {
 		$time = time ();
 		$req = array ();
-		$req ['id'] = $this->conf->clientId;
-		$req ['method'] = $this->className . '.' . $name;
-		$req ['time'] = $time;
-		$req ['sign'] = md5 ( $time . $this->conf->key );
-		$req ['args'] = json_encode ( $args );
+		$req = $args;
+		$req ['_id'] = $this->conf->id;
+		$req ['_method'] = $name;
+		$req ['_time'] = $time;
+		$req ['_sign'] = md5 ( $time . $this->conf->key );
 		$query = '?' . http_build_query ( $req );
 		$this->url = rtrim ( $this->conf->url, '/' ) . $query;
 		$res = $this->fetch ( $this->url );
@@ -59,6 +55,16 @@ class Rpc_Http_Client {
 	function getLastUrl() {
 		return $this->url;
 	}
+	
+	/**
+	 * curl opt
+	 *
+	 * @param unknown $name        	
+	 * @param unknown $value        	
+	 */
+	function setOpt($name, $value) {
+		$this->opt [$name] = $value;
+	}
 	private function fetch($url) {
 		$opt = array ();
 		$opt [CURLOPT_HEADER] = false;
@@ -71,6 +77,9 @@ class Rpc_Http_Client {
 		$opt [CURLOPT_MAXREDIRS] = 10;
 		$ch = curl_init ();
 		curl_setopt_array ( $ch, $opt );
+		if (empty ( $this->opt )) {
+			curl_setopt_array ( $ch, $this->opt );
+		}
 		curl_setopt ( $ch, CURLOPT_URL, $url );
 		$res = curl_exec ( $ch );
 		curl_close ( $ch );

@@ -1,59 +1,23 @@
 <?php
 class Rpc_Http_Server {
-	private static $conf;
-	private $classNames;
+	private $conf;
 	
 	/**
-	 * initialize configuration of server side
-	 * array key is clientId and value is config,each config contains key,timeout(second)
 	 *
-	 * @param array $conf        	
-	 */
-	static function initConfig(array $conf) {
-		foreach ( $conf as $k => $v ) {
-			if (! array_key_exists ( 'key', $v )) {
-				throw new Rpc_Http_Server_Exception ( 'key not found, clientId=' . $k );
-			}
-		}
-		foreach ( $conf as $k => $v ) {
-			if (isset ( $v ['timeout'] ) && empty ( $v ['timeout'] )) {
-				unset ( $v ['timeout'] );
-			}
-			$conf [$k] = $v;
-		}
-		self::$conf = $conf;
-	}
-	
-	/**
-	 * get a server instance
-	 *
-	 * @param array $classNames
-	 *        	wildcards
+	 * @param array $conf
+	 *        	id,key,classname,timeout
 	 * @throws Rpc_Http_Server_Exception
-	 * @return Yar_Server
 	 */
-	static function factory(array $classNames) {
-		if (! isset ( self::$conf )) {
-			throw new Rpc_Http_Server_Exception ( 'conf is not set yet' );
+	function __construct($conf) {
+		$this->conf = array ();
+		foreach ( $conf as $v ) {
+			$this->conf [$v ['key']] = $v;
 		}
-		return new self ( $classNames );
 	}
 	
 	/**
 	 *
-	 * @param unknown $clientId        	
-	 * @param unknown $classNames        	
-	 */
-	private function __construct($classNames) {
-		$this->classNames = $classNames;
-	}
-	
-	/**
-	 *
-	 * @param unknown $name        	
-	 * @param unknown $param        	
-	 * @throws Rpc_Http_Server_Exceptionn
-	 * @return mixed
+	 * @throws Rpc_Http_Server_Exception
 	 */
 	function handle() {
 		$res = array (
@@ -63,11 +27,15 @@ class Rpc_Http_Server {
 		);
 		try {
 			$param = $this->getRequest ();
+			// method check
+			if (false === strpos ( $param ['_method'], '.' )) {
+				throw new Rpc_Http_Server_Exception ( 'method is invalid, method=' . $param ['_method'] );
+			}
 			// client check
 			$clientOk = false;
-			if (array_key_exists ( $param ['id'], self::$conf )) {
+			if (array_key_exists ( $param ['_id'], $this->conf )) {
 				$clientOk = true;
-				$conf = ( object ) self::$conf [$param ['id']];
+				$conf = ( object ) $this->conf [$param ['_id']];
 			}
 			if (! $clientOk) {
 				throw new Rpc_Http_Server_Exception ( 'client not found' );
@@ -75,7 +43,7 @@ class Rpc_Http_Server {
 			// timeout check
 			if (isset ( $conf->timeout )) {
 				$timeoutOk = false;
-				$timeoutRemote = $param ['time'];
+				$timeoutRemote = $param ['_time'];
 				if (time () - $timeoutRemote <= $conf->timeout) {
 					$timeoutOk = true;
 				}
@@ -85,19 +53,19 @@ class Rpc_Http_Server {
 			}
 			// sign check
 			$signOk = false;
-			$signRemote = $param ['sign'];
-			$sign = md5 ( $param ['time'] . $conf->key );
+			$signRemote = $param ['_sign'];
+			$sign = md5 ( $param ['_time'] . $conf->key );
 			if ($sign == $signRemote) {
 				$signOk = true;
 			}
 			if (! $signOk) {
 				throw new Rpc_Http_Server_Exception ( 'sign error' );
 			}
-			$args = $param ['args'];
+			$args = $param ['_args'];
 			// class check
-			list ( $className, $method ) = explode ( '.', $param ['method'] );
+			list ( $className, $method ) = explode ( '.', $param ['_method'] );
 			$classnameOk = false;
-			foreach ( $this->classNames as $v ) {
+			foreach ( $conf->classname as $v ) {
 				if (fnmatch ( $v, $className )) {
 					$classnameOk = true;
 					break;
@@ -112,7 +80,7 @@ class Rpc_Http_Server {
 					$method 
 			);
 			if (! is_callable ( $cb )) {
-				throw new Rpc_Http_Server_Exception ( 'api method not callable, method=' . $param ['method'] );
+				throw new Rpc_Http_Server_Exception ( 'api method not callable, method=' . $param ['_method'] );
 			}
 			$res ['res'] = call_user_func_array ( $cb, $args );
 		} catch ( Exception $e ) {
@@ -122,7 +90,7 @@ class Rpc_Http_Server {
 			if ($e instanceof Rpc_Http_Server_Exception) {
 				$res ['errorMsg'] = 'http server serror: ' . $e->getMessage ();
 			} else {
-				$res ['errorMsg'] = $e->getMessage ();
+				$res ['errorMsg'] = $e->__toString ();
 			}
 			$res ['errorNo'] = $e->getCode ();
 		}
@@ -130,32 +98,20 @@ class Rpc_Http_Server {
 	}
 	
 	/**
-	 * Get params sent from client.Params contains id,sign,method,args,time.
+	 * Get params sent from client
 	 */
 	private function getRequest() {
-		$req = array ();
-		$param = $_GET;
+		$req = $_GET;
 		$keys = array (
-				'id',
-				'sign',
-				'method',
-				'time' 
+				'_id',
+				'_sign',
+				'_method',
+				'_time' 
 		);
 		foreach ( $keys as $v ) {
-			if (! array_key_exists ( $v, $param ) && empty ( $param [$v] )) {
+			if (empty ( $req [$v] )) {
 				throw new Rpc_Http_Server_Exception ( 'param ' . $v . ' not found' );
 			}
-			$req [$v] = $param [$v];
-		}
-		// method
-		if (false === strpos ( $param ['method'], '.' )) {
-			throw new Rpc_Http_Server_Exception ( 'method is invalid, method=' . $param ['method'] );
-		}
-		// args
-		if (! array_key_exists ( 'args', $param ) || empty ( $param ['args'] )) {
-			$req ['args'] = array ();
-		} else {
-			$req ['args'] = json_decode ( $param ['args'], true );
 		}
 		return $req;
 	}

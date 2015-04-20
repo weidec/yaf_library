@@ -1,20 +1,16 @@
 <?php
 class Rpc_Yar_Client {
 	private $conf;
-	private $className;
 	private $client;
 	
 	/**
 	 *
 	 * @param array $conf
-	 *        	clientId,url,key,timeout(milisecond) timeout is optional
-	 * @param string $className
-	 *        	remote className
-	 * @param string $key        	
+	 *        	id,url,key
 	 */
-	function __construct(array $conf, $className) {
+	function __construct(array $conf) {
 		$keys = array (
-				'clientId',
+				'id',
 				'url',
 				'key' 
 		);
@@ -23,15 +19,11 @@ class Rpc_Yar_Client {
 			if (! array_key_exists ( $v, $conf )) {
 				throw new Yar_Client_Exception ( "$v not set in \$conf" );
 			}
-			if ($v != 'url' && $v != 'timeout') {
+			if ($v != 'url') {
 				$this->conf->$v = $conf [$v];
 			}
 		}
 		$this->client = new Yar_Client ( $conf ['url'] );
-		if (array_key_exists ( 'timeout', $conf ) && ! empty ( $conf ['timeout'] )) {
-			$this->setOpt ( YAR_OPT_TIMEOUT, ( int ) $conf ['timeout'] );
-		}
-		$this->className = $className;
 	}
 	
 	/**
@@ -43,22 +35,17 @@ class Rpc_Yar_Client {
 		$name = $this->className . '.' . $name;
 		$time = time ();
 		$sign = md5 ( $time . $this->conf->key );
-		$param = array (
-				'id' => $this->conf->clientId,
-				'sign' => $sign,
-				'time' => $time,
-				'args' => $args 
-		);
-		return $this->client->api ( $name, $param );
+		$args['_id']=$this->conf->id;
+		$args['_sign']=$sign;
+		$args['_time']=$time;
+		return $this->client->api ( $name,$args);
 	}
 	
 	/**
-	 * same as Yar_Client::setOpt()
 	 *
-	 * @param unknown $name        	
-	 * @param unknown $value        	
+	 * @return Yar_Client
 	 */
-	function setOpt($name, $value) {
-		return $this->client->setOpt ( $name, $value );
+	function getClient() {
+		return $this->client;
 	}
 }
