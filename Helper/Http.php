@@ -5,64 +5,6 @@
  *
  */
 class Helper_Http {
-	
-	/**
-	 * send post
-	 *
-	 * @param string $url        	
-	 * @param array $data        	
-	 * @param string $type        	
-	 * @return string
-	 */
-	static function post($url, $data, $type = 'form') {
-		if ($type == 'form')
-			$contentType = 'application/x-www-form-urlencoded';
-		elseif ($type == 'xmlrpc')
-			$contentType = 'text/xml';
-		else
-			user_error ( 'type was invalid', E_USER_WARNING );
-		$url = parse_url ( $url );
-		if (! $url)
-			user_error ( "couldn't parse url", E_USER_ERROR );
-		$port = "80";
-		if ($type == 'form')
-			$data = http_build_query ( $data );
-		$len = strlen ( $data );
-		$uri = $url ['path'];
-		if (! empty ( $url ['query'] )) {
-			$uri .= '?' . $url ['query'];
-		}
-		$out = "POST " . $uri . " HTTP/1.1\r\n";
-		$out .= "Host: " . $url ['host'] . "\r\n";
-		$out .= "Expires: Mon, 26 Jul 1970 05:00:00 GMT\r\n";
-		$out .= "Last-Modified: " . gmdate ( "D, d M Y H:i:s" ) . " GMT\r\n";
-		$out .= "Cache-Control: no-cache, must-revalidate\r\n";
-		$out .= "Pragma: no-cache\r\n";
-		$out .= "Content-type: $contentType\r\n";
-		$out .= "Connection: Close\r\n";
-		$out .= "Content-Length: $len\r\n";
-		$out .= "\r\n";
-		$out .= $data . "\r\n";
-		$fp = fsockopen ( $url ['host'], $port );
-		$line = "";
-		if (! $fp) {
-			user_error ( "fsockopen error", E_USER_ERROR );
-		} else {
-			fwrite ( $fp, $out );
-			while ( ! feof ( $fp ) ) {
-				$line .= fgets ( $fp, 2048 );
-			}
-			// cutoff header
-			if ($line) {
-				$body = stristr ( $line, "\r\n\r\n" );
-				$body = substr ( $body, 4 );
-				$line = $body;
-			}
-			fclose ( $fp );
-			return $line;
-		}
-	}
-	
 	/**
 	 * redirect
 	 *

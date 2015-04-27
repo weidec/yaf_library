@@ -1,11 +1,11 @@
 <?php
-require __DIR__ . '/lib/Smarty-3.1.21/libs/Smarty.class.php';
+require Yaf_Loader::getInstance ()->getLibraryPath ( true ) . '/lib/Smarty-3.1.21/libs/Smarty.class.php';
 /**
- * 
- * @author admin@phpdr.net
  *
+ * @author admin@phpdr.net
+ *        
  */
-class SmartyAdapter implements Yaf_View_Interface {
+class YafSmarty implements Yaf_View_Interface {
 	/**
 	 * Smarty object
 	 *

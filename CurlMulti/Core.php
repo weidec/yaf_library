@@ -50,6 +50,8 @@ class CurlMulti_Core {
 	);
 	// stack or queue
 	public $taskPoolType = 'stack';
+	// eliminate duplicate for taskpool, will delete previous task and add new one
+	public $taskOverride = false;
 	// task callback,add() should be called in callback, $cbTask[0] is callback, $cbTask[1] is param.
 	public $cbTask = null;
 	// status callback
@@ -59,20 +61,21 @@ class CurlMulti_Core {
 	// common fail callback, called if no one specified
 	public $cbFail = null;
 	
+	// is the loop running
+	protected $isRunning = false;
 	// max thread num no type
-	private $maxThreadNoType = null;
+	protected $maxThreadNoType = null;
 	// all added task was saved here first
-	private $taskPool = array ();
+	protected $taskPool = array ();
 	// taskPool with high priority
-	private $taskPoolAhead = array ();
+	protected $taskPoolAhead = array ();
 	// running task(s)
-	private $taskRunning = array ();
+	protected $taskRunning = array ();
 	// failed task need to retry
-	private $taskFail = array ();
+	protected $taskFail = array ();
+	
 	// handle of multi-thread curl
 	private $mh = null;
-	// is process running
-	private $isRunning = false;
 	// user error
 	private $userError = null;
 	// if __construct called
@@ -132,7 +135,7 @@ class CurlMulti_Core {
 	 * add a task to taskPool
 	 *
 	 * @param array $item
-	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','ahead'=>false,'cache'=>array('enable'=>bool,'expire'=>0)))]]]])
+	 *        	array('url'=>'',['file'=>'',['opt'=>array(),['args'=>array(),['ctl'=>array('type'=>'','ahead'=>false,'cache'=>array('enable'=>bool,'expire'=>0),'close'=>true))]]]])
 	 * @param mixed $process
 	 *        	success callback,for callback first param array('info'=>,'content'=>), second param $item[args]
 	 * @param mixed $fail
@@ -202,13 +205,16 @@ class CurlMulti_Core {
 	 */
 	private function addTaskPool($task) {
 		// uniq
-		foreach ( array (
-				'taskPoolAhead',
-				'taskPool' 
-		) as $v ) {
-			foreach ( $this->$v as $k1 => $v1 ) {
-				if ($v1 [self::TASK_ITEM_URL] == $task [self::TASK_ITEM_URL]) {
-					unset ( $this->taskPoolAhead [$k1] );
+		if ($this->taskOverride) {
+			foreach ( array (
+					'taskPoolAhead',
+					'taskPool' 
+			) as $v ) {
+				foreach ( $this->$v as $k1 => $v1 ) {
+					if ($v1 [self::TASK_ITEM_URL] == $task [self::TASK_ITEM_URL]) {
+						$t = &$this->$v;
+						unset ( $t [$k1] );
+					}
 				}
 			}
 		}
@@ -267,8 +273,7 @@ class CurlMulti_Core {
 					$param = array ();
 					$param ['info'] = $info;
 					$param ['ext'] = array (
-							'init_url' => $task [self::TASK_ITEM_URL],
-							'file' => $task [self::TASK_ITEM_FILE] 
+							'ch' => $ch 
 					);
 					if (! isset ( $task [self::TASK_ITEM_FILE] )) {
 						$param ['content'] = curl_multi_getcontent ( $ch );
@@ -276,7 +281,9 @@ class CurlMulti_Core {
 				}
 				curl_multi_remove_handle ( $this->mh, $ch );
 				// must close first,other wise download may be not commpleted in process callback
-				curl_close ( $ch );
+				if (! array_key_exists ( 'close', $task [self::TASK_ITEM_CTL] ) || $task [self::TASK_ITEM_CTL] ['close'] == true) {
+					curl_close ( $ch );
+				}
 				if ($curlInfo ['result'] == CURLE_OK) {
 					$this->process ( $task, $param, false );
 				}
