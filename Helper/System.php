@@ -90,7 +90,7 @@ class Helper_System {
 	}
 	
 	/**
-	 *
+	 * maybe not very exact
 	 * @param int $pid        	
 	 * @return boolean
 	 */
@@ -98,17 +98,21 @@ class Helper_System {
 		if (PHP_OS == 'Linux' && PHP_SAPI == 'cli') {
 			$r = false;
 			if (is_numeric ( $pid ) && $pid > 0) {
-				$lines = array ();
-				exec ( "/proc/$pid/exe -v", $lines );
-				if (count ( $lines ) == 3) {
-					if ('PHP' == substr ( $lines [0], 0, 3 ) && 'Copyright' == substr ( $lines [1], 0, 9 ) && 'Zend' == substr ( $lines [2], 0, 4 )) {
-						$r = true;
+				$exe="/proc/$pid/exe";
+				if(is_executable($exe)){
+					$lines = array ();
+					exec ( "$exe -v", $lines );
+					if (count ( $lines ) == 3) {
+						if ('PHP' == substr ( $lines [0], 0, 3 ) && 'Copyright' == substr ( $lines [1], 0, 9 ) && 'Zend' == substr ( $lines [2], 0, 4 )) {
+							$r = true;
+						}
 					}
-				}
-				// additional check method if no privilege
-				if (false == $r) {
-					if (isset ( $_SERVER ['_'] ) && '/php' == substr ( $_SERVER ['_'], - 4 )) {
-						$r = true;
+				}else{
+					// additional check method if no privilege
+					if (false == $r) {
+						if (isset ( $_SERVER ['_'] ) && '/php' == substr ( $_SERVER ['_'], - 4 )) {
+							$r = true;
+						}
 					}
 				}
 			}

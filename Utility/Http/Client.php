@@ -1,5 +1,5 @@
 <?php
-class Util_Http_Client {
+class Utility_Http_Client {
 	private $conf;
 	private $curl;
 	private $url;
@@ -57,7 +57,7 @@ class Util_Http_Client {
 				'url' => $url,
 				'opt' => $this->opt 
 		), $callback );
-		$this->url [] = $url;
+		$this->url [$id] = $url;
 		return $this;
 	}
 	
@@ -69,8 +69,22 @@ class Util_Http_Client {
 	function start() {
 		$this->curl->start ();
 		$res = $this->res;
+		foreach ( $res as $k => $v ) {
+			$res [$k] = $this->decode ( $v );
+		}
 		$this->res = array ();
 		return $res;
+	}
+	
+	/**
+	 *
+	 * @param unknown $data        	
+	 */
+	private function decode($data) {
+		if (0 === strpos ( $data, '{"' )) {
+			return json_decode ( $data );
+		}
+		return $data;
 	}
 	
 	/**
@@ -82,13 +96,14 @@ class Util_Http_Client {
 	function call($args = array()) {
 		$res = null;
 		$url = $this->getUrl ( $args );
+		$this->url = $url;
 		$this->curl->add ( array (
 				'url' => $url,
 				'opt' => $this->opt 
 		), function ($r) use(&$res) {
 			$res = $r ['content'];
 		} )->start ();
-		return $res;
+		return $this->decode ( $res );
 	}
 	
 	/**

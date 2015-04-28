@@ -1,5 +1,7 @@
 <?php
-class Rpc_Http_Server {
+class Utility_Http_Server {
+	public $errorCode = 0x0001;
+	public $errorStack = false;
 	private $conf = array ();
 	
 	/**
@@ -11,10 +13,10 @@ class Rpc_Http_Server {
 	function __construct($conf) {
 		foreach ( $conf as $k => $v ) {
 			if (empty ( $v ['id'] ) || empty ( $v ['key'] )) {
-				throw new Utility_Http_Server_Exception ( "id or key not found in conf[$k]" );
+				throw new Utility_Http_Server_Exception ( "id or key not found in conf[$k]", $this->errorCode );
 			}
 			if (array_key_exists ( $v ['id'], $this->conf )) {
-				throw new Utility_Http_Server_Exception ( 'duplicate client id found, id=' . $v ['id'] );
+				throw new Utility_Http_Server_Exception ( 'duplicate client id found, id=' . $v ['id'], $this->errorCode );
 			}
 			$node = array ();
 			$node ['key'] = $v ['key'];
@@ -46,7 +48,7 @@ class Rpc_Http_Server {
 				$conf = ( object ) $this->conf [$param ['_id']];
 			}
 			if (! $clientOk) {
-				throw new Utility_Http_Server_Exception ( 'client not found, _id=' . $param ['_id'] );
+				throw new Utility_Http_Server_Exception ( 'client not found, _id=' . $param ['_id'], $this->errorCode );
 			}
 			// timeout check
 			if (isset ( $conf->timeout ) && is_numeric ( $conf->timeout )) {
@@ -56,7 +58,7 @@ class Rpc_Http_Server {
 					$timeoutOk = true;
 				}
 				if (! $timeoutOk) {
-					throw new Utility_Http_Server_Exception ( 'request timeout' );
+					throw new Utility_Http_Server_Exception ( 'request timeout', $this->errorCode );
 				}
 			}
 			// sign check
@@ -67,19 +69,23 @@ class Rpc_Http_Server {
 				$signOk = true;
 			}
 			if (! $signOk) {
-				throw new Utility_Http_Server_Exception ( 'sign error' );
+				throw new Utility_Http_Server_Exception ( 'sign error', $this->errorCode );
 			}
 			if (! is_callable ( $callback )) {
-				throw new Utility_Http_Server_Exception ( 'callback is invalid, callback=' . $callback );
+				throw new Utility_Http_Server_Exception ( 'callback is invalid, callback=' . $callback, $this->errorCode );
 			}
 			unset ( $param ['_id'], $param ['_time'], $param ['_sign'] );
-			$res ['res'] = call_user_func_array ( $callback, $param );
+			$res ['result'] = call_user_func ( $callback, $param );
 		} catch ( Exception $e ) {
 			if (ini_get ( 'log_errors' )) {
 				error_log ( $e->__toString () . "\n" );
 			}
-			$res ['errorMsg'] = $e->__toString ();
-			$res ['errorNo'] = $e->getCode ();
+			if ($e instanceof Utility_Http_Server_Exception || false == $this->errorStack) {
+				$res ['errorMessage'] = $e->getMessage ();
+			} else {
+				$res ['errorMessage'] = $e->__toString ();
+			}
+			$res ['errorCode'] = $e->getCode ();
 		}
 		echo json_encode ( $res );
 	}
@@ -99,7 +105,7 @@ class Rpc_Http_Server {
 		);
 		foreach ( $keys as $v ) {
 			if (empty ( $param [$v] )) {
-				throw new Utility_Http_Server_Exception ( 'param ' . $v . ' not found' );
+				throw new Utility_Http_Server_Exception ( 'param ' . $v . ' not found', $this->errorCode );
 			}
 		}
 		return $param;
