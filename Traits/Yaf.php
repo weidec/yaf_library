@@ -4,8 +4,8 @@
  * @author admin@phpdr.net
  *
  */
-trait Traits_Bootstrap {
-	
+trait Traits_Yaf {
+
 	/**
 	 * Common
 	 *
@@ -19,9 +19,9 @@ trait Traits_Bootstrap {
 			throw new Yaf_Exception_StartupError ( 'APP_PATH not defined' );
 		}
 	}
-	
+
 	/**
-	 * php index.php moduleName%controller_name?key1=>value1&key2=value2
+	 * php index.php module%controller/action?key1=>value1&key2=value2
 	 */
 	private function initCli() {
 		$request = Yaf_Dispatcher::getInstance ()->getRequest ();

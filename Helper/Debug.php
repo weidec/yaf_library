@@ -1,5 +1,5 @@
 <?php
-class Helper_Error {
+class Helper_Debug {
 	/**
 	 * deal with exception
 	 */
@@ -14,7 +14,7 @@ class Helper_Error {
 			error_log ( $exception->__toString () . "\n" );
 		}
 	}
-	
+
 	/**
 	 *
 	 * @throws ErrorException
@@ -39,5 +39,31 @@ class Helper_Error {
 				}
 			}
 		} );
+	}
+
+	/**
+	 *
+	 * @param mixed $true
+	 */
+	static function memUsage($true = false, $precision = 3) {
+		return round ( memory_get_usage ( $true ) / 1024 / 1024, $precision ) . 'MB';
+	}
+
+	/**
+	 * get execution time in second call
+	 *
+	 * @param boolean $continue
+	 */
+	static function runtime($continue = false) {
+		static $start = null;
+		$time = microtime ( true );
+		if (is_null ( $start ))
+			$start = $time;
+		else {
+			echo round ( $time - $start, 9 ) . (PHP_SAPI != 'cli' ? '<br>' : "\n");
+			$start = null;
+		}
+		if (! $continue && is_null ( $start ))
+			exit ();
 	}
 }

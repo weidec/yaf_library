@@ -31,24 +31,24 @@ class Utility_Http_Client {
 		}
 		$this->curl = new CurlMulti_Core ();
 	}
+	
 	/**
 	 * add a request, mainly used for multithread call
 	 *
-	 * @param mixed $id
-	 *        	id for request
+	 * @param mixed $requestId        	
 	 * @param array $args        	
 	 * @param string $callback        	
 	 * @return self
 	 */
-	function add($id, $args = array(), $callback = null) {
-		if (array_key_exists ( $id, $this->res )) {
-			user_error ( 'id already added, id=' . $id, E_USER_WARNING );
+	function add($requestId, $args = array(), $callback = null) {
+		if (array_key_exists ( $requestId, $this->res )) {
+			user_error ( 'id already added, id=' . $requestId, E_USER_WARNING );
 			return $this;
 		}
-		$this->res [$id] = null;
+		$this->res [$requestId] = null;
 		if (empty ( $callback )) {
-			$callback = function ($r) use($id) {
-				$this->res [$id] = $r ['content'];
+			$callback = function ($r) use($requestId) {
+				$this->res [$requestId] = $r ['content'];
 			};
 		}
 		$this->url = array ();
@@ -57,7 +57,7 @@ class Utility_Http_Client {
 				'url' => $url,
 				'opt' => $this->opt 
 		), $callback );
-		$this->url [$id] = $url;
+		$this->url [$requestId] = $url;
 		return $this;
 	}
 	

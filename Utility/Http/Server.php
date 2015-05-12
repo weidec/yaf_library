@@ -3,30 +3,29 @@ class Utility_Http_Server {
 	public $errorCode = 0x0001;
 	public $errorStack = false;
 	private $conf = array ();
-	
+
 	/**
 	 *
 	 * @param array $conf
-	 *        	eache value is an array with id,key,timeout
+	 *        	array key is client id
+	 *        	value is array with key,timeout
 	 * @throws Rpc_Http_Server_Exception
 	 */
 	function __construct($conf) {
 		foreach ( $conf as $k => $v ) {
-			if (empty ( $v ['id'] ) || empty ( $v ['key'] )) {
-				throw new Utility_Http_Server_Exception ( "id or key not found in conf[$k]", $this->errorCode );
+			if (empty ( $v ['key'] )) {
+				throw new Utility_Http_Server_Exception ( "key not found in conf[$k]", $this->errorCode );
 			}
-			if (array_key_exists ( $v ['id'], $this->conf )) {
-				throw new Utility_Http_Server_Exception ( 'duplicate client id found, id=' . $v ['id'], $this->errorCode );
-			}
+			settype ( $k, 'string' );
 			$node = array ();
 			$node ['key'] = $v ['key'];
 			if (array_key_exists ( 'timeout', $v ) && is_numeric ( $v ['timeout'] )) {
 				$node ['timeout'] = $v ['timeout'];
 			}
-			$this->conf [$v ['id']] = $node;
+			$this->conf [$k] = $node;
 		}
 	}
-	
+
 	/**
 	 *
 	 * @param $callback mixed
@@ -37,7 +36,7 @@ class Utility_Http_Server {
 		$res = array (
 				'errorCode' => 0,
 				'errorMessage' => null,
-				'result' => null 
+				'data' => null
 		);
 		try {
 			$param = $this->getParam ();
@@ -48,7 +47,7 @@ class Utility_Http_Server {
 				$conf = ( object ) $this->conf [$param ['_id']];
 			}
 			if (! $clientOk) {
-				throw new Utility_Http_Server_Exception ( 'client not found, _id=' . $param ['_id'], $this->errorCode );
+				throw new Utility_Http_Server_Exception ( 'client not found, clientId=' . $param ['_id'], $this->errorCode );
 			}
 			// timeout check
 			if (isset ( $conf->timeout ) && is_numeric ( $conf->timeout )) {
@@ -74,8 +73,18 @@ class Utility_Http_Server {
 			if (! is_callable ( $callback )) {
 				throw new Utility_Http_Server_Exception ( 'callback is invalid, callback=' . $callback, $this->errorCode );
 			}
+			$meta = array (
+					'id' => $param ['_id'],
+					'client' => array (
+							'time' => $param ['_time']
+					),
+					'server' => array ()
+			);
+			if (isset ( $conf->timeout )) {
+				$meta ['server'] ['timeout'] = $conf->timeout;
+			}
 			unset ( $param ['_id'], $param ['_time'], $param ['_sign'] );
-			$res ['result'] = call_user_func ( $callback, $param );
+			$res ['data'] = call_user_func ( $callback, $param, $meta );
 		} catch ( Exception $e ) {
 			if (ini_get ( 'log_errors' )) {
 				error_log ( $e->__toString () . "\n" );
@@ -89,7 +98,7 @@ class Utility_Http_Server {
 		}
 		echo json_encode ( $res );
 	}
-	
+
 	/**
 	 * Get params sent from client
 	 *
@@ -101,7 +110,7 @@ class Utility_Http_Server {
 		$keys = array (
 				'_id',
 				'_sign',
-				'_time' 
+				'_time'
 		);
 		foreach ( $keys as $v ) {
 			if (empty ( $param [$v] )) {
