@@ -4,27 +4,15 @@
  * @author admin@phpdr.net
  *
  */
-trait Traits_Yaf {
-
-	/**
-	 * Common
-	 *
-	 * @throws Yaf_Exception_StartupError
-	 */
-	private function initCommon() {
-		if (! Yaf_Dispatcher::getInstance ()->getRequest ()->isCli ()) {
+class Plugin_Yaf_Init extends Yaf_Plugin_Abstract {
+	function routerStartup(Yaf_Request_Abstract $request, Yaf_Response_Abstract $response) {
+		if (! $request->isCli ()) {
 			header ( 'Content-Type: text/html; charset=utf-8' );
 		}
 		if (! defined ( 'APP_PATH' )) {
 			throw new Yaf_Exception_StartupError ( 'APP_PATH not defined' );
 		}
-	}
 
-	/**
-	 * php index.php module%controller/action?key1=>value1&key2=value2
-	 */
-	private function initCli() {
-		$request = Yaf_Dispatcher::getInstance ()->getRequest ();
 		if ($request->isCli ()) {
 			global $argc, $argv;
 			if ($argc > 1) {
@@ -36,7 +24,7 @@ trait Traits_Yaf {
 				$module = strtolower ( $module );
 				$modules = Yaf_Application::app ()->getModules ();
 				if (in_array ( ucfirst ( $module ), $modules )) {
-					Yaf_Dispatcher::getInstance ()->getRequest ()->setModuleName ( $module );
+					$request->setModuleName ( $module );
 				}
 				if (false === strpos ( $uri, '?' )) {
 					$args = array ();

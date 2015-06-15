@@ -1,5 +1,5 @@
 <?php
-class Functions {
+class Function_Common {
 }
 
 if (! function_exists ( 'printr' )) {
@@ -15,12 +15,15 @@ if (! function_exists ( 'printr' )) {
 		if (PHP_SAPI != 'cli')
 			$str .= "<pre>\n";
 		$str .= print_r ( $data, true );
+		if (is_string ( $data )) {
+			$str .= "\n";
+		}
 		if (PHP_SAPI != 'cli')
 			$str .= "</pre>\n";
 		if ($return) {
 			return trim ( $str );
 		} else {
-			echo $str . "\n";
+			echo $str;
 			if (! $continue)
 				exit ();
 		}

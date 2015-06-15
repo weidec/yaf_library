@@ -1,43 +1,36 @@
 <?php
-require Yaf_Loader::getInstance ()->getLibraryPath ( true ) . '/lib/Smarty-3.1.21/libs/Smarty.class.php';
 /**
  *
  * @author admin@phpdr.net
- *        
+ *
  */
-class YafSmarty implements Yaf_View_Interface {
+class Utility_YafSmarty implements Yaf_View_Interface {
 	/**
 	 * Smarty object
 	 *
 	 * @var Smarty
 	 */
 	protected $_smarty;
-	
+
 	/**
 	 * Constructor
 	 *
-	 * @param string $tmplPath        	
-	 * @param array $extraParams        	
+	 * @param string $tmplPath
+	 * @param array $extraParams
 	 * @return void
 	 */
 	public function __construct($tmplPath = null, $extraParams = array()) {
 		$this->_smarty = new Smarty ();
-		if (empty ( $tmplPath )) {
-			$tmplPath = APP_PATH . '/views';
-		}
-		if (empty ( $extraParams ['compile_dir'] )) {
-			$extraParams ['compile_dir'] = APP_PATH . '/cache/smarty/compile';
-		}
-		if (empty ( $extraParams ['cache_dir'] )) {
-			$extraParams ['cache_dir'] = APP_PATH . '/cache/smarty/cache';
-		}
 		$this->_smarty->muteExpectedErrors ();
-		$this->setScriptPath ( $tmplPath );
+		if (null !== $tmplPath) {
+			$this->setScriptPath ( $tmplPath );
+		}
+
 		foreach ( $extraParams as $key => $value ) {
 			$this->_smarty->$key = $value;
 		}
 	}
-	
+
 	/**
 	 * Set the path to the templates
 	 *
@@ -50,13 +43,18 @@ class YafSmarty implements Yaf_View_Interface {
 			$this->_smarty->template_dir = $path;
 			return;
 		}
-		
+
 		throw new Yaf_Exception_LoadFailed_View ( 'Invalid path provided' );
 	}
+
+	/**
+	 * (non-PHPdoc)
+	 * @see Yaf_View_Interface::getScriptPath()
+	 */
 	public function getScriptPath() {
 		return $this->_smarty->template_dir;
 	}
-	
+
 	/**
 	 * Assign variables to the template
 	 *
@@ -77,16 +75,16 @@ class YafSmarty implements Yaf_View_Interface {
 			$this->_smarty->assign ( $spec );
 			return;
 		}
-		
+
 		$this->_smarty->assign ( $spec, $value );
 	}
-	
+
 	/**
 	 * Processes a template and returns the output.
 	 *
 	 * @param string $name
 	 *        	The template to process.
-	 * @param array $value        	
+	 * @param array $value
 	 * @return string The output.
 	 */
 	public function render($name, $value = NULL) {
@@ -95,13 +93,13 @@ class YafSmarty implements Yaf_View_Interface {
 		}
 		return $this->_smarty->fetch ( $name );
 	}
-	
+
 	/**
 	 * output
 	 *
 	 * @param string $name
 	 *        	The template to process.
-	 * @param array $value        	
+	 * @param array $value
 	 * @see Yaf_View_Interface::display()
 	 */
 	public function display($name, $value = NULL) {

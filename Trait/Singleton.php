@@ -1,5 +1,5 @@
 <?php
-trait Traits_Singleton {
+trait Trait_Singleton {
 	private static $instances = array ();
 	/**
 	 *
