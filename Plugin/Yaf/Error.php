@@ -1,7 +1,7 @@
 <?php
 class Plugin_Yaf_Error extends Yaf_Plugin_Abstract {
 	function routerStartup(Yaf_Request_Abstract $request, Yaf_Response_Abstract $response) {
-		set_error_handler ( function ($errno, $errstr, $errfile, $errline) {
+		set_error_handler ( function ($errno, $errstr, $errfile, $errline) use($request) {
 			// errors supressed by @ will cause error_reporting() always return 0
 			$r = error_reporting ();
 			if ($r & $errno) {
