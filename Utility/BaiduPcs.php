@@ -2,7 +2,7 @@
 /**
  * Neet CurlMulti
  * @author admin@phpdr.net
- *        
+ *
  */
 require dirname ( __DIR__ ) . '/lib/BaiduPcs-2.1.0/libs/BaiduPCS.class.php';
 class Utility_BaiduPCS extends BaiduPCS {
@@ -42,7 +42,7 @@ class Utility_BaiduPCS extends BaiduPCS {
 		$r = null;
 		$this->curl = new CurlMulti_Core ();
 		$this->curl->add ( array (
-				'url' => $url 
+				'url' => $url
 		), function ($result) use(&$r) {
 			if ($result ['info'] ['http_code'] == 200) {
 				$r = $result;
@@ -65,11 +65,11 @@ class Utility_BaiduPCS extends BaiduPCS {
 		}
 		parent::__construct ( $token->access_token );
 	}
-	
+
 	/**
 	 * curl upload.The SDK method read the whole file to memory and then upload it...
 	 *
-	 * @param unknown $file        	
+	 * @param unknown $file
 	 * @return array false
 	 */
 	function curlUpload($file, $remoteFile) {
@@ -88,8 +88,13 @@ class Utility_BaiduPCS extends BaiduPCS {
 		$opt [CURLOPT_SSL_VERIFYHOST] = false;
 		$opt [CURLOPT_CONNECTTIMEOUT] = 30;
 		$opt [CURLOPT_POST] = true;
+		if (class_exists ( 'CURLFile' )) {
+			$path = new CURLFile ( $file );
+		} else {
+			$path = '@' . $file;
+		}
 		$opt [CURLOPT_POSTFIELDS] = array (
-				'file' => '@' . $file 
+				'file' => $path
 		);
 		$return = null;
 		$this->curl->cbInfo = function ($info) use($file, $size) {
@@ -100,13 +105,13 @@ class Utility_BaiduPCS extends BaiduPCS {
 		};
 		$this->curl->add ( array (
 				'url' => $url,
-				'opt' => $opt 
+				'opt' => $opt
 		), function ($r) use(&$return) {
 			$return = $r;
 		} )->start ();
 		return $return;
 	}
-	
+
 	/**
 	 * get an accesstoken.The method should be called in controller.
 	 */
@@ -125,7 +130,7 @@ class Utility_BaiduPCS extends BaiduPCS {
 			}
 		}
 	}
-	
+
 	/**
 	 * get and accesstoken use fresh token
 	 */
@@ -133,17 +138,17 @@ class Utility_BaiduPCS extends BaiduPCS {
 		$url = "https://openapi.baidu.com/oauth/2.0/token?grant_type=refresh_token&refresh_token=$refreshToken&client_id=" . $this->clientID . "&client_secret=" . $this->clientSecret . "&scope=basic netdisk";
 		return self::tokenSave ( $url, $this->tokenFile );
 	}
-	
+
 	/**
 	 * save token to file
 	 *
-	 * @param unknown $token        	
+	 * @param unknown $token
 	 */
 	private static function tokenSave($url, $tokenFile) {
 		$token = null;
 		$curl = new CurlMulti_Core ();
 		$curl->add ( array (
-				'url' => $url 
+				'url' => $url
 		), function ($r) use(&$token) {
 			$token = $r ['content'];
 		} )->start ();
