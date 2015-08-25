@@ -18,10 +18,7 @@ class Helper_Debug {
 					error_log ( $exception->__toString () . "\n" );
 				}
 				if (ini_get ( 'display_errors' )) {
-					if (PHP_SAPI != 'cli') {
-						echo '<pre>';
-					}
-					echo self::errorSeverityString ( $exception->getSeverity () ) . ': ' . $exception->__toString ();
+					self::exceptionString($exception);
 				}
 			}
 		} );
@@ -33,7 +30,7 @@ class Helper_Debug {
 	 * @param unknown $severity
 	 * @return string
 	 */
-	static function errorSeverityString($severity) {
+	private static function errorSeverityString($severity) {
 		switch ($severity) {
 			case E_ERROR : // 1 //
 				return 'E_ERROR';
@@ -69,18 +66,26 @@ class Helper_Debug {
 	}
 
 	/**
+	 * output severity if exception is ErrorException
+	 * @param unknown $exception
+	 */
+	private static function exceptionString($exception){
+		if (PHP_SAPI != 'cli') {
+			echo '<pre>';
+		}
+		$pre = '';
+		if ($exception instanceof ErrorException) {
+			$pre = self::errorSeverityString ( $exception->getSeverity () ) . ': ';
+		}
+		echo $pre . $exception->__toString();
+	}
+
+	/**
 	 * deal with exception
 	 */
 	static function catchException($exception) {
 		if (ini_get ( 'display_errors' )) {
-			if (PHP_SAPI != 'cli') {
-				echo '<pre>';
-			}
-			$pre = '';
-			if ($exception instanceof ErrorException) {
-				$pre = self::errorSeverityString ( $exception->getSeverity () ) . ': ';
-			}
-			echo $pre . $exception;
+			self::exceptionString($exception);
 		}
 		if (ini_get ( 'log_errors' )) {
 			error_log ( $exception->__toString () . "\n" );

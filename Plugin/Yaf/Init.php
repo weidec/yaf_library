@@ -13,6 +13,12 @@ class Plugin_Yaf_Init extends Yaf_Plugin_Abstract {
 			throw new Yaf_Exception_StartupError ( 'APP_PATH not defined' );
 		}
 
+		new Function_Debug ();
+		Helper_Debug::error2exception ();
+		set_exception_handler ( 'Helper_Debug::catchException' );
+		set_include_path ( get_include_path () . ':' . Yaf_Loader::getInstance ()->getLibraryPath ( true ) );
+
+		// parse cli
 		if ($request->isCli ()) {
 			global $argc, $argv;
 			if ($argc > 1) {
